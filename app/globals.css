@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0a0f0b;
+  --surface: #111a13;
+  --surface-2: #18231b;
+  --sunken: #0d140f;
+  --line: #223227;
+  --text: #eaf2ec;
+  --muted: #93a89a;
+  --soft: #c9d6cd;
+  --accent: #34d17a;
+  --accent-ink: #06120a;
+  --green-bg: #0f2a1a;
+  --green-line: #1f5c39;
+  --green-soft: #9fd8b5;
+  --urgent: #f59e0b;
+  --star: #f5c451;
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-line bg-surface;
+  }
+  .card-green {
+    @apply rounded-card border border-green-line bg-green-bg;
+  }
+  .btn {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-btn px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-accent-ink hover:brightness-110 active:brightness-95;
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-transparent text-text hover:bg-surface-2;
+  }
+  .btn-light {
+    @apply btn bg-text text-accent-ink hover:bg-soft;
+  }
+  .btn-danger {
+    @apply btn border border-[#5c2626] bg-transparent text-[#F26B6B] hover:bg-[#2a1212];
+  }
+  .chip {
+    @apply inline-flex min-h-[36px] items-center whitespace-nowrap rounded-full border border-line bg-surface px-4 text-sm text-soft transition-colors;
+  }
+  .chip-active {
+    @apply border-accent bg-accent font-semibold text-accent-ink;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .input {
+    @apply min-h-[48px] w-full rounded-btn border border-line bg-sunken px-4 text-sm text-text placeholder:text-muted focus:border-green-line focus:outline-none;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-semibold text-soft;
+  }
+  .h-display {
+    @apply font-display font-bold tracking-tight;
+  }
+  .icon-btn {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-btn border border-line bg-surface text-text hover:bg-surface-2;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.pb-nav {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

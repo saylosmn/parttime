@@ -1,0 +1,60 @@
+plugins {
+    id 'com.android.application'
+}
+
+def twaHost = project.findProperty('twaHost') ?: 'tsag.vercel.app'
+
+android {
+    namespace 'mn.tsag.app'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'mn.tsag.app'
+        minSdk 21
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+
+        // TWA: апп нээгдэхэд ачаалах вэб хаяг
+        manifestPlaceholders = [
+            hostName    : twaHost,
+            defaultUrl  : "https://${twaHost}/?source=android",
+            launcherName: 'Цаг',
+        ]
+        resValue 'string', 'assetStatements',
+            "[{ \"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": {\"namespace\": \"web\", \"site\": \"https://${twaHost}\"}}]"
+    }
+
+    signingConfigs {
+        release {
+            // keystore.properties файлаас уншина (git-д орохгүй)
+            def propsFile = rootProject.file('keystore.properties')
+            if (propsFile.exists()) {
+                def p = new Properties()
+                propsFile.withInputStream { p.load(it) }
+                storeFile rootProject.file(p['storeFile'])
+                storePassword p['storePassword']
+                keyAlias p['keyAlias']
+                keyPassword p['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (rootProject.file('keystore.properties').exists()) signingConfig signingConfigs.release
+        }
+    }
+
+    buildFeatures { resValues true }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+}
