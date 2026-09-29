@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { Notification, User } from '@/models';
 import { sendPushToUser, sendPushToUsers } from './push';
 import { adminEmails } from './config';
+import { sendTelegram, siteUrl, tgEscape, type TgButton } from './telegram';
 
 export type NotifyType =
   | 'application_new'
@@ -60,7 +61,23 @@ export async function notifyMany(userIds: (string | Types.ObjectId)[], n: Notify
   }
 }
 
-export async function notifyAdmins(n: NotifyInput) {
+const ADMIN_ICONS: Partial<Record<NotifyType, string>> = {
+  job_pending: '📝',
+  report_new: '🚩',
+  low_rating: '⚠️',
+  payment_new: '💳',
+};
+
+/**
+ * Админуудад: апп доторх мэдэгдэл + push + Telegram (давхар).
+ * `tg.text` өгвөл Telegram-д тусгай текст, `tg.buttons` өгвөл хурдан үйлдлийн товч гарна.
+ */
+export async function notifyAdmins(n: NotifyInput, tg?: { text?: string; buttons?: TgButton[][] }) {
   const admins = await User.find({ $or: [{ role: 'admin' }, { email: { $in: adminEmails() } }] }, '_id').lean();
-  await notifyMany(admins.map((a) => a._id), n);
+  const text =
+    tg?.text ??
+    [`${ADMIN_ICONS[n.type] ?? '🔔'} <b>${tgEscape(n.title)}</b>`, n.body ? tgEscape(n.body) : '', `${siteUrl()}${n.link}`]
+      .filter(Boolean)
+      .join('\n\n');
+  await Promise.all([notifyMany(admins.map((a) => a._id), n), sendTelegram(text, tg?.buttons).catch(() => false)]);
 }

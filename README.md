@@ -58,7 +58,7 @@ scripts/icons.mjs   PWA icon үүсгэгч
 | `ADMIN_EMAILS` | Таслалаар тусгаарласан админ имэйлүүд |
 | `CRON_SECRET` | Vercel Cron-ийн нууц (Vercel өөрөө `Authorization: Bearer` header-ээр илгээнэ) |
 | `NEXT_PUBLIC_APP_NAME` | Апп нэр (анхдагч: Цаг) |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Төлбөрийн хүсэлт ирэхэд админы Telegram руу мессеж илгээх бот (заавал биш) |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` | Админы бүх мэдэгдэл Telegram руу давхар очно; төлбөрийг Telegram товчоор баталгаажуулна. Тохируулсны дараа админаар `/api/telegram/setup`-ийг нэг удаа нээнэ |
 | `NEXT_PUBLIC_TELEGRAM_CONTACT` | Төлбөрийн хуудсан дээрх "Telegram-аар холбогдох" товчны username |
 | `DEV_LOGIN` | Зөвхөн local: seed хэрэглэгчээр нэвтрэх |
 

@@ -47,9 +47,9 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
     title: `Шинэ төлбөр: гүйлгээний утга ${p.code}`,
     body: `${company} «${job?.title ?? ''}» зарыг онцлох болгохоор ${p.amount.toLocaleString('en-US')}₮ шилжүүлсэн гэж мэдэгдлээ. Дансаа шалгаад баталгаажуулна уу.`,
     link: '/admin/payments',
-  });
-  await sendTelegram(
-    [
+  }, {
+    // Telegram дээр дансаа шалгаад шууд товчоор шийдвэрлэнэ
+    text: [
       '💳 <b>Шинэ төлбөр</b>',
       `Гүйлгээний утга: <code>${p.code}</code>`,
       `Дүн: ${p.amount.toLocaleString('en-US')}₮ (${p.days} хоног онцлох)`,
@@ -57,8 +57,12 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       `Зар: «${tgEscape(job?.title ?? '')}»`,
       `Цаг: ${formatDateTime(p.paidAt!)}`,
       '',
-      `Дансанд орсныг шалгаад баталгаажуулна уу: ${process.env.AUTH_URL || 'https://parttime-three.vercel.app'}/admin/payments`,
+      'Дансанд орсныг шалгаад доорх товчоор шийдвэрлэнэ үү.',
     ].join('\n'),
-  );
+    buttons: [[
+      { text: '✅ Баталгаажуулах', data: `pay:c:${p._id}` },
+      { text: '❌ Цуцлах', data: `pay:r:${p._id}` },
+    ]],
+  });
   return ok();
 });
