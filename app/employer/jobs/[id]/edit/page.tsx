@@ -26,6 +26,7 @@ export default async function EditJobPage({ params }: { params: { id: string } }
           payUnit: job.payUnit as PayUnit,
           district: job.district,
           address: job.address ?? '',
+          mapUrl: job.mapUrl ?? '',
           schedule: job.schedule,
           tags: job.tags as JobTag[],
           isUrgent: job.isUrgent,

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DISTRICTS } from './config';
+import { isGoogleMapsUrl } from './maps';
 
 // Тусгай мессежгүй алдаанд монгол хэлээр хариулна
 z.config({
@@ -65,6 +66,12 @@ export const jobSchema = z.object({
   payUnit: z.enum(['hour', 'day', 'task', 'month']),
   district,
   address: z.string().trim().max(200).optional(),
+  mapUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((s) => s === '' || isGoogleMapsUrl(s), 'Google Maps-ийн холбоос оруулна уу (Share → Copy link)')
+    .optional(),
   schedule: z
     .string()
     .trim()

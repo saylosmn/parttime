@@ -1,6 +1,7 @@
 import { handle, ok, requireUser, HttpError } from '@/lib/guards';
 import { jobSchema } from '@/lib/validators';
 import { Job } from '@/models';
+import { mapFields } from '@/lib/job-location';
 
 type Ctx = { params: { id: string } };
 
@@ -16,7 +17,7 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
   const me = await requireUser(['employer']);
   const job = await ownJob(params.id, me.id, me.role);
   const data = jobSchema.parse(await req.json());
-  Object.assign(job, data);
+  Object.assign(job, data, await mapFields(data.mapUrl));
   if (me.role !== 'admin') job.status = 'pending';
   await job.save();
   return ok();

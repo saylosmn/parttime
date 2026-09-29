@@ -44,6 +44,7 @@ const JobSchema = new Schema(
     district: { type: String, required: true },
     address: String,
     location: { lat: Number, lng: Number },
+    mapUrl: String, // Ажил олгогчийн оруулсан Google Maps холбоос
     schedule: { type: String, required: true },
     tags: [{ type: String, enum: ['weekend', 'evening', 'remote', 'no_experience'] }],
     status: { type: String, enum: ['pending', 'active', 'closed', 'rejected'], default: 'pending' },

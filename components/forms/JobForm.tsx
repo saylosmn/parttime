@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
-import { Plus, X, Zap } from 'lucide-react';
+import { MapPin, Plus, X, Zap } from 'lucide-react';
 import { api } from '@/lib/client';
 import { PAY_UNITS, TAGS, type JobTag, type PayUnit } from '@/lib/config';
 import { requestPushPromptLater } from '../Pwa';
@@ -17,6 +17,7 @@ export type JobValues = {
   payUnit: PayUnit;
   district: string;
   address: string;
+  mapUrl: string;
   schedule: string;
   tags: JobTag[];
   isUrgent: boolean;
@@ -30,6 +31,7 @@ const EMPTY: JobValues = {
   payUnit: 'hour',
   district: '',
   address: '',
+  mapUrl: '',
   schedule: '',
   tags: [],
   isUrgent: false,
@@ -54,7 +56,7 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
     setErr('');
     if (!v.payAmount) return setErr('Цалингийн дүн заавал');
     setBusy(true);
-    const body = { ...v, payAmount: Number(v.payAmount), address: v.address || undefined };
+    const body = { ...v, payAmount: Number(v.payAmount), address: v.address || undefined, mapUrl: v.mapUrl || undefined };
     const r = id ? await api(`/api/jobs/${id}`, 'PATCH', body) : await api<{ id: string }>('/api/jobs', 'POST', body);
     setBusy(false);
     if (!r.ok) return setErr(r.error);
@@ -109,6 +111,30 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
         <Field label="Хаяг">
           <input className="input" value={v.address} onChange={(e) => set({ address: e.target.value })} placeholder="1-р хороо, ... төвийн 2 давхар" maxLength={200} />
         </Field>
+      </div>
+
+      <div>
+        <span className="label">Google Maps холбоос</span>
+        <div className="relative">
+          <MapPin size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            className="input pl-11"
+            type="url"
+            inputMode="url"
+            value={v.mapUrl}
+            onChange={(e) => set({ mapUrl: e.target.value.trim() })}
+            placeholder="https://maps.app.goo.gl/..."
+            maxLength={500}
+          />
+        </div>
+        <p className="mt-1 text-xs text-muted">
+          Google Maps дээр байршлаа олоод «Share» → «Copy link» дарж энд тавина. Оюутнуудад газрын зураг дээр харагдана.
+        </p>
+        {v.mapUrl && (
+          <a href={v.mapUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-sm font-semibold text-accent">
+            Холбоосыг шалгах ↗
+          </a>
+        )}
       </div>
 
       <Field label="Хийх ажил">

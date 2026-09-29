@@ -5,6 +5,7 @@ import { LIMITS } from '@/lib/config';
 import { notifyAdmins } from '@/lib/notify';
 import { searchJobs } from '@/lib/queries';
 import { dbConnect } from '@/lib/db';
+import { mapFields } from '@/lib/job-location';
 
 export const GET = handle(async (req: Request) => {
   await dbConnect();
@@ -20,6 +21,7 @@ export const POST = handle(async (req: Request) => {
   const data = jobSchema.parse(await req.json());
   const job = await Job.create({
     ...data,
+    ...(await mapFields(data.mapUrl)),
     employerId: me.id,
     status: 'pending',
     expiresAt: new Date(Date.now() + LIMITS.jobLifetimeDays * 86400_000),

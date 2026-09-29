@@ -36,6 +36,11 @@ export default async function AdminPending() {
               <p className="text-sm text-soft">
                 {j.schedule} · {j.district}
                 {j.address && `, ${j.address}`}
+                {j.mapUrl && (
+                  <a href={j.mapUrl} target="_blank" rel="noopener noreferrer" className="ml-2 font-semibold text-accent">
+                    Газрын зураг ↗
+                  </a>
+                )}
                 {j.isUrgent && <span className="badge ml-2 bg-urgent text-accent-ink">Яаралтай</span>}
               </p>
               <p className="line-clamp-4 whitespace-pre-line text-sm text-muted">{j.description}</p>

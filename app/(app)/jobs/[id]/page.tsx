@@ -9,6 +9,7 @@ import { TAGS, JOB_STATUS, type PayUnit, type JobTag } from '@/lib/config';
 import { Avatar, Pay, Rating, UrgentBadge, Verified } from '@/components/ui';
 import { ApplySheet } from '@/components/ApplySheet';
 import { ReportButton } from '@/components/ReportButton';
+import { JobMap } from '@/components/JobMap';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,6 +109,14 @@ export default async function JobPage({ params }: { params: { id: string } }) {
           </div>
         </section>
       )}
+
+      <JobMap
+        district={job.district}
+        address={job.address ?? undefined}
+        mapUrl={job.mapUrl ?? undefined}
+        lat={job.location?.lat ?? undefined}
+        lng={job.location?.lng ?? undefined}
+      />
 
       <div className="card flex items-center gap-3 p-4 text-sm text-soft">
         <ShieldCheck size={20} className={employer.verified ? 'text-accent' : 'text-muted'} />
