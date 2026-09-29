@@ -47,6 +47,17 @@ export const REVIEW_TAGS = {
   employer_to_student: ['Цагтаа ирсэн', 'Хичээнгүй', 'Дахин ажиллуулна', 'Ирээгүй'],
 } as const;
 
+/** Онцлох зарын төлбөр хүлээн авах данс (Төлбөр хуудсанд харагдана). */
+export const BANK = {
+  bankName: 'Mbank',
+  iban: '020039008000499100',
+  account: '8000499100',
+  holder: 'Sanjid',
+};
+
+/** Онцлох зарын үнэ: 7 хоног = 10,000₮ */
+export const FEATURE_PRICE = { amount: 10_000, days: 7 };
+
 export const LIMITS = {
   applicationsPerDay: 20,
   jobsPerDay: 10,

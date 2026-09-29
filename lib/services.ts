@@ -47,7 +47,16 @@ export async function broadcastJob(job: JobT) {
   const employer = await User.findById(job.employerId, 'name companyName').lean();
   const company = employer?.companyName || employer?.name || 'Ажил олгогч';
   const pay = formatPay(job.payAmount, job.payUnit as PayUnit);
-  const students = await User.find({ role: 'student', banned: { $ne: true } }, '_id').lean();
+  // Оюутны тохиргоог хүндэтгэнэ: 'off' бол илгээхгүй, 'district' бол зөвхөн өөрийн дүүргийн зар
+  const students = await User.find(
+    {
+      role: 'student',
+      banned: { $ne: true },
+      jobAlerts: { $ne: 'off' },
+      $or: [{ jobAlerts: { $ne: 'district' } }, { district: job.district }],
+    },
+    '_id',
+  ).lean();
 
   await notifyMany(
     students.map((s) => s._id),

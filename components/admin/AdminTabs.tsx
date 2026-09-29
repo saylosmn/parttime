@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 
-export function AdminTabs({ pending, reports }: { pending: number; reports: number }) {
+export function AdminTabs({ pending, reports, payments }: { pending: number; reports: number; payments: number }) {
   const p = usePathname();
   const tabs = [
     { href: '/admin', label: 'Хүлээгдэж буй', n: pending },
+    { href: '/admin/payments', label: 'Төлбөр', n: payments },
     { href: '/admin/jobs', label: 'Бүх зар', n: 0 },
     { href: '/admin/users', label: 'Хэрэглэгчид', n: 0 },
     { href: '/admin/reports', label: 'Гомдол', n: reports },

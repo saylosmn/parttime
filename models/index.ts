@@ -19,6 +19,8 @@ const UserSchema = new Schema(
     district: String,
     availability: [{ type: String, enum: ['weekday_day', 'weekday_evening', 'weekend'] }],
     bio: String,
+    // Шинэ зарын мэдэгдэл: бүгд / зөвхөн өөрийн дүүрэг / унтраах
+    jobAlerts: { type: String, enum: ['all', 'district', 'off'], default: 'all' },
     companyName: String,
     companyDistrict: String,
     verified: { type: Boolean, default: false },
@@ -148,3 +150,21 @@ const ReportSchema = new Schema(
   { timestamps: { createdAt: true, updatedAt: false } },
 );
 export const Report = mk('Report', ReportSchema);
+
+/* ---------- Payment (онцлох зарын дансаар төлөх хүсэлт) ---------- */
+const PaymentSchema = new Schema(
+  {
+    employerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    jobId: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
+    code: { type: String, required: true }, // Гүйлгээний утга: санамсаргүй 4 оронтой тоо
+    amount: { type: Number, required: true },
+    days: { type: Number, required: true },
+    status: { type: String, enum: ['pending', 'confirmed', 'rejected'], default: 'pending' },
+    note: String,
+  },
+  { timestamps: true },
+);
+PaymentSchema.index({ status: 1, createdAt: -1 });
+// Хүлээгдэж буй төлбөрүүдийн дунд код давхардахгүй
+PaymentSchema.index({ code: 1 }, { unique: true, partialFilterExpression: { status: 'pending' } });
+export const Payment = mk('Payment', PaymentSchema);

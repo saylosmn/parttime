@@ -107,6 +107,38 @@ export function UserAdminActions({ id, verified, banned, role }: { id: string; v
   );
 }
 
+export function PaymentActions({ id }: { id: string }) {
+  const { busy, err, run } = useAct();
+  const [rejecting, setRejecting] = useState(false);
+  const [note, setNote] = useState('');
+  const url = `/api/admin/payments/${id}`;
+  return (
+    <div className="flex w-full flex-col gap-2 sm:w-auto">
+      {rejecting ? (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input className="input" autoFocus placeholder="Шалтгаан (жишээ: мөнгө ороогүй)" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} />
+          <button className="btn-danger" disabled={busy || note.trim().length < 3} onClick={() => run(url, { action: 'reject', note })}>
+            Татгалзах
+          </button>
+          <button className="btn-ghost" onClick={() => setRejecting(false)}>
+            Болих
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button className="btn-primary" disabled={busy} onClick={() => confirm('Дансанд мөнгө орсныг шалгасан уу? Зар онцлох болно.') && run(url, { action: 'confirm' })}>
+            Баталгаажуулах
+          </button>
+          <button className="btn-ghost" disabled={busy} onClick={() => setRejecting(true)}>
+            Татгалзах
+          </button>
+        </div>
+      )}
+      {err && <p className="text-sm text-danger">{err}</p>}
+    </div>
+  );
+}
+
 export function ResolveReport({ id }: { id: string }) {
   const { busy, run } = useAct();
   return (

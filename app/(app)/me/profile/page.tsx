@@ -6,6 +6,7 @@ import { Avatar, Rating } from '@/components/ui';
 import { InstallRow, PushToggle } from '@/components/Pwa';
 import { ProfileEditor } from '@/components/ProfileEditor';
 import { SignOutButton } from '@/components/SignOutButton';
+import { JobAlertsSetting } from '@/components/JobAlertsSetting';
 
 export const metadata = { title: 'Профайл' };
 export const dynamic = 'force-dynamic';
@@ -77,6 +78,7 @@ export default async function ProfilePage() {
             <span>Push мэдэгдэл</span>
             <PushToggle />
           </div>
+          <JobAlertsSetting initial={(user.jobAlerts as 'all' | 'district' | 'off') ?? 'all'} district={user.district ?? undefined} />
           <InstallRow />
         </div>
 
