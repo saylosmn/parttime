@@ -48,6 +48,8 @@ self.addEventListener('push', (event) => {
     data = { title: 'Цаг', body: event.data && event.data.text() };
   }
   const title = data.title || 'Цаг';
+  // Нээлттэй хуудсуудад "шинэчил" дохио илгээнэ (realtime)
+  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => wins.forEach((w) => w.postMessage({ type: 'live' })));
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',

@@ -61,6 +61,7 @@ const JobSchema = new Schema(
 JobSchema.index({ status: 1, createdAt: -1 });
 JobSchema.index({ status: 1, district: 1 });
 JobSchema.index({ status: 1, expiresAt: 1 });
+JobSchema.index({ updatedAt: -1 }); // /api/live
 export const Job = mk('Job', JobSchema);
 export type JobT = WithId<InferSchemaType<typeof JobSchema>>;
 
@@ -85,6 +86,8 @@ const ApplicationSchema = new Schema(
 );
 ApplicationSchema.index({ jobId: 1, studentId: 1 }, { unique: true });
 ApplicationSchema.index({ studentId: 1, createdAt: -1 });
+ApplicationSchema.index({ studentId: 1, updatedAt: -1 }); // /api/live
+ApplicationSchema.index({ employerId: 1, updatedAt: -1 });
 export const Application = mk('Application', ApplicationSchema);
 export type ApplicationT = WithId<InferSchemaType<typeof ApplicationSchema>>;
 
