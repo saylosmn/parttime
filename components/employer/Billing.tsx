@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, Send } from 'lucide-react';
+import { Check, Copy, Send, X } from 'lucide-react';
 import { api } from '@/lib/client';
 
-function CopyRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+function CopyRow({ label, value, mono = false, highlight = false }: { label: string; value: string; mono?: boolean; highlight?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="flex min-h-[52px] items-center justify-between gap-3 px-4">
-      <span className="text-sm text-muted">{label}</span>
+    <div className={`flex min-h-[52px] items-center justify-between gap-3 px-4 ${highlight ? 'bg-green-bg' : ''}`}>
+      <span className={`text-sm ${highlight ? 'font-semibold text-green-soft' : 'text-muted'}`}>{label}</span>
       <button
         type="button"
         className="flex min-h-[44px] items-center gap-2 text-right font-semibold"
@@ -22,92 +22,108 @@ function CopyRow({ label, value, mono = false }: { label: string; value: string;
         }}
         aria-label={`${label} хуулах`}
       >
-        <span className={mono ? 'font-mono tracking-wide' : ''}>{value}</span>
+        <span className={`${mono ? 'font-mono tracking-wide' : ''} ${highlight ? 'h-display text-2xl tracking-[0.25em] text-accent' : ''}`}>{value}</span>
         {copied ? <Check size={16} className="text-accent" /> : <Copy size={16} className="text-muted" />}
       </button>
     </div>
   );
 }
 
-export function BankCard({
+export type PayJob = { id: string; title: string; featuredUntil: string | null };
+type Bank = { bankName: string; iban: string; account: string; holder: string };
+type OpenPayment = { id: string; code: string; amount: number; status: 'awaiting' | 'pending' };
+
+export function PaymentPanel({
   bank,
-  amount,
+  jobs,
+  selectedId,
+  payment,
   telegram,
 }: {
-  bank: { bankName: string; iban: string; account: string; holder: string };
-  amount: number;
+  bank: Bank;
+  jobs: PayJob[];
+  selectedId: string;
+  payment: OpenPayment;
   telegram: string | null;
 }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const selected = jobs.find((j) => j.id === selectedId);
+
+  async function act(action: 'paid' | 'cancel') {
+    setBusy(true);
+    setErr('');
+    const r = await api(`/api/payments/${payment.id}`, 'PATCH', { action });
+    setBusy(false);
+    if (!r.ok) return setErr(r.error);
+    router.refresh();
+  }
+
   return (
-    <div className="space-y-3">
-      <div className="divide-y divide-line rounded-card border border-line bg-sunken">
-        <CopyRow label="Банк" value={bank.bankName} />
-        <CopyRow label="IBAN" value={bank.iban} mono />
-        <CopyRow label="Дансны дугаар" value={bank.account} mono />
-        <CopyRow label="Данс эзэмшигч" value={bank.holder} />
-        <CopyRow label="Дүн" value={`${amount.toLocaleString('en-US')}₮`} />
+    <section className="card space-y-4 p-5">
+      <div>
+        <label className="label" htmlFor="pay-job">Онцлох болгох зар</label>
+        <select
+          id="pay-job"
+          className="input"
+          value={selectedId}
+          disabled={busy}
+          onChange={(e) => router.push(`/employer/billing?job=${e.target.value}`)}
+        >
+          {jobs.map((j) => (
+            <option key={j.id} value={j.id}>
+              {j.title}
+              {j.featuredUntil ? ` (онцлох · ${j.featuredUntil} хүртэл)` : ''}
+            </option>
+          ))}
+        </select>
+        {selected?.featuredUntil && <p className="mt-1 text-xs text-muted">Төлбөр баталгаажвал онцлох хугацаа {selected.featuredUntil}-аас цааш сунгагдана.</p>}
       </div>
+
+      <div>
+        <p className="label">Дараах дансанд шилжүүлнэ</p>
+        <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-sunken">
+          <CopyRow label="Банк" value={bank.bankName} />
+          <CopyRow label="IBAN" value={bank.iban} mono />
+          <CopyRow label="Дансны дугаар" value={bank.account} mono />
+          <CopyRow label="Данс эзэмшигч" value={bank.holder} />
+          <CopyRow label="Дүн" value={`${payment.amount.toLocaleString('en-US')}₮`} />
+          <CopyRow label="Гүйлгээний утга" value={payment.code} highlight />
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          Гүйлгээний утга дээр <b className="text-soft">зөвхөн {payment.code}</b> гэж бичнэ. Энэ кодоор таны төлбөрийг таньж, зарыг тань онцлох болгоно.
+        </p>
+      </div>
+
+      {payment.status === 'awaiting' ? (
+        <div className="space-y-2">
+          <button className="btn-primary w-full" disabled={busy} onClick={() => act('paid')}>
+            <Check size={18} /> Төлбөр шилжүүлсэн
+          </button>
+          <p className="text-center text-xs text-muted">Шилжүүлсний дараа дарна уу — Telegram-аар шалгаж баталгаажуулна.</p>
+        </div>
+      ) : (
+        <div className="rounded-btn border border-urgent/40 bg-[#2a1f08] p-4 text-sm">
+          <p className="font-semibold text-urgent">Шалгаж байна</p>
+          <p className="mt-1 text-soft">Таны төлбөрийг Telegram-аар шалгаж байна. Баталгаажмагц зар тань онцлох болж, танд мэдэгдэл очно.</p>
+        </div>
+      )}
+
+      <button
+        className="btn-ghost w-full text-danger"
+        disabled={busy}
+        onClick={() => confirm(`Гүйлгээ ${payment.code}-ийг цуцлах уу?${payment.status === 'pending' ? ' Хэрэв мөнгө шилжүүлсэн бол Telegram-аар холбогдоно уу.' : ''}`) && act('cancel')}
+      >
+        <X size={16} /> Гүйлгээ цуцлах
+      </button>
+
       {telegram && (
         <a href={`https://t.me/${telegram.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer" className="btn-ghost w-full">
           <Send size={16} /> Telegram-аар холбогдох
         </a>
       )}
-    </div>
-  );
-}
-
-export type PayJob = { id: string; title: string; featuredUntil: string | null; pendingCode: string | null };
-
-export function PayForJob({ jobs, amount }: { jobs: PayJob[]; amount: number }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
-  const [err, setErr] = useState('');
-  const [codes, setCodes] = useState<Record<string, string>>(
-    Object.fromEntries(jobs.filter((j) => j.pendingCode).map((j) => [j.id, j.pendingCode as string])),
-  );
-
-  return (
-    <div className="space-y-2.5">
-      {jobs.map((j) => {
-        const code = codes[j.id];
-        return (
-          <div key={j.id} className="rounded-card border border-line bg-sunken p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold">{j.title}</p>
-                <p className="text-xs text-muted">{j.featuredUntil ? `Онцлох · ${j.featuredUntil} хүртэл` : 'Энгийн зар'}</p>
-              </div>
-              {!code && (
-                <button
-                  className="btn-primary shrink-0"
-                  disabled={busy === j.id}
-                  onClick={async () => {
-                    setBusy(j.id);
-                    setErr('');
-                    const r = await api<{ code: string }>('/api/payments', 'POST', { jobId: j.id });
-                    setBusy(null);
-                    if (!r.ok) return setErr(r.error);
-                    setCodes((c) => ({ ...c, [j.id]: r.data.code }));
-                    router.refresh();
-                  }}
-                >
-                  {j.featuredUntil ? 'Сунгах' : 'Төлбөр төлөх'}
-                </button>
-              )}
-            </div>
-            {code && (
-              <div className="mt-3 rounded-btn border border-green-line bg-green-bg p-4 text-center">
-                <p className="text-xs text-green-soft">Гүйлгээний утга дээр бичих код</p>
-                <p className="h-display mt-1 text-4xl tracking-[0.3em] text-accent">{code}</p>
-                <p className="mt-2 text-xs text-green-soft">
-                  {amount.toLocaleString('en-US')}₮-ийг дээрх дансанд шилжүүлээд, утга дээр зөвхөн <b>{code}</b> гэж бичнэ. Telegram-аар баталгаажмагц танд мэдэгдэл очно.
-                </p>
-              </div>
-            )}
-          </div>
-        );
-      })}
       {err && <p className="text-sm text-danger">{err}</p>}
-    </div>
+    </section>
   );
 }

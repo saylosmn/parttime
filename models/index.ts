@@ -159,12 +159,17 @@ const PaymentSchema = new Schema(
     code: { type: String, required: true }, // Гүйлгээний утга: санамсаргүй 4 оронтой тоо
     amount: { type: Number, required: true },
     days: { type: Number, required: true },
-    status: { type: String, enum: ['pending', 'confirmed', 'rejected'], default: 'pending' },
+    // awaiting: код олгосон, шилжүүлээгүй · pending: "шилжүүлсэн" гэж мэдэгдсэн, админ шалгана
+    // confirmed / rejected: админ шийдвэрлэсэн · cancelled: ажил олгогч цуцалсан
+    status: { type: String, enum: ['awaiting', 'pending', 'confirmed', 'rejected', 'cancelled'], default: 'awaiting' },
+    open: { type: Boolean, default: true }, // awaiting эсвэл pending үед true
+    paidAt: Date,
     note: String,
   },
   { timestamps: true },
 );
 PaymentSchema.index({ status: 1, createdAt: -1 });
-// Хүлээгдэж буй төлбөрүүдийн дунд код давхардахгүй
-PaymentSchema.index({ code: 1 }, { unique: true, partialFilterExpression: { status: 'pending' } });
+PaymentSchema.index({ jobId: 1, open: 1 });
+// Нээлттэй төлбөрүүдийн дунд гүйлгээний утга давхардахгүй
+PaymentSchema.index({ code: 1 }, { unique: true, partialFilterExpression: { open: true }, name: 'code_open_unique' });
 export const Payment = mk('Payment', PaymentSchema);

@@ -20,7 +20,7 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
   // Давхар баталгаажуулахаас сэргийлж зөвхөн pending төлөвөөс атомаар шилжүүлнэ
   const payment = await Payment.findOneAndUpdate(
     { _id: params.id, status: 'pending' },
-    input.action === 'confirm' ? { status: 'confirmed' } : { status: 'rejected', note: input.note },
+    input.action === 'confirm' ? { status: 'confirmed', open: false } : { status: 'rejected', open: false, note: input.note },
     { new: true },
   );
   if (!payment) throw new HttpError(409, 'Төлбөр олдсонгүй эсвэл аль хэдийн шийдвэрлэгдсэн');

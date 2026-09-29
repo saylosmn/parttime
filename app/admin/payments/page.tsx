@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function AdminPayments({ searchParams }: { searchParams: { status?: string } }) {
   await pageUser(['admin']);
   const status = searchParams.status === 'done' ? 'done' : 'pending';
-  const payments = await Payment.find(status === 'pending' ? { status: 'pending' } : { status: { $ne: 'pending' } })
+  const payments = await Payment.find(status === 'pending' ? { status: 'pending' } : { status: { $in: ['confirmed', 'rejected', 'cancelled'] } })
     .sort({ createdAt: status === 'pending' ? 1 : -1 })
     .limit(100)
     .populate('jobId', 'title')
@@ -56,7 +56,7 @@ export default async function AdminPayments({ searchParams }: { searchParams: { 
                 <PaymentActions id={p._id.toString()} />
               ) : (
                 <span className={clsx('badge', p.status === 'confirmed' ? 'bg-green-bg text-green-soft' : 'bg-[#2a1212] text-[#F26B6B]')}>
-                  {p.status === 'confirmed' ? 'Баталгаажсан' : 'Татгалзсан'}
+                  {p.status === 'confirmed' ? 'Баталгаажсан' : p.status === 'cancelled' ? 'Цуцалсан' : 'Татгалзсан'}
                 </span>
               )}
             </div>

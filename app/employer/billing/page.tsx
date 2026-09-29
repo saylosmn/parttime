@@ -2,7 +2,8 @@ import { Zap } from 'lucide-react';
 import { pageUser } from '@/lib/guards';
 import { Job, Payment } from '@/models';
 import { BANK, FEATURE_PRICE, formatDateTime } from '@/lib/config';
-import { BankCard, PayForJob, type PayJob } from '@/components/employer/Billing';
+import { getOrCreateOpenPayment } from '@/lib/payments';
+import { PaymentPanel, type PayJob } from '@/components/employer/Billing';
 
 export const metadata = { title: 'Төлбөр' };
 export const dynamic = 'force-dynamic';
@@ -11,22 +12,28 @@ const STATUS = {
   pending: { label: 'Шалгаж байна', cls: 'bg-[#2a1f08] text-urgent' },
   confirmed: { label: 'Баталгаажсан', cls: 'bg-green-bg text-green-soft border border-green-line' },
   rejected: { label: 'Татгалзсан', cls: 'bg-[#2a1212] text-[#F26B6B]' },
+  cancelled: { label: 'Цуцалсан', cls: 'bg-surface-2 text-muted' },
 } as const;
 
 // Онлайн төлбөр (QPay) одоохондоо байхгүй: дансаар шилжүүлж, админ Telegram-аар мэдээлэл аваад баталгаажуулна.
-export default async function BillingPage() {
+export default async function BillingPage({ searchParams }: { searchParams: { job?: string } }) {
   const me = await pageUser(['employer']);
-  const [jobs, payments] = await Promise.all([
-    Job.find({ employerId: me.id, status: 'active' }, 'title isFeatured featuredUntil').sort({ createdAt: -1 }).lean(),
-    Payment.find({ employerId: me.id }).sort({ createdAt: -1 }).limit(20).populate('jobId', 'title').lean(),
-  ]);
-  const pendingByJob = new Map(payments.filter((p) => p.status === 'pending').map((p) => [String((p.jobId as { _id?: unknown })?._id ?? p.jobId), p.code]));
+  const jobs = await Job.find({ employerId: me.id, status: 'active' }, 'title isFeatured featuredUntil').sort({ createdAt: -1 }).lean();
   const payJobs: PayJob[] = jobs.map((j) => ({
     id: j._id.toString(),
     title: j.title,
     featuredUntil: j.isFeatured && j.featuredUntil && j.featuredUntil > new Date() ? new Date(j.featuredUntil).toLocaleDateString('mn-MN') : null,
-    pendingCode: pendingByJob.get(j._id.toString()) ?? null,
   }));
+
+  // Сонгосон зарын гүйлгээний утгыг шууд харуулна (товч дарах шаардлагагүй)
+  const selected = payJobs.find((j) => j.id === searchParams.job) ?? payJobs[0];
+  const open = selected ? await getOrCreateOpenPayment(me.id, selected.id) : null;
+
+  const history = await Payment.find({ employerId: me.id, status: { $in: ['pending', 'confirmed', 'rejected', 'cancelled'] }, paidAt: { $exists: true } })
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .populate('jobId', 'title')
+    .lean();
   const telegram = process.env.NEXT_PUBLIC_TELEGRAM_CONTACT || null;
 
   return (
@@ -43,41 +50,36 @@ export default async function BillingPage() {
         </ul>
       </div>
 
-      <section className="card space-y-4 p-5">
-        <h2 className="font-bold">Хэрхэн төлөх вэ?</h2>
-        <ol className="space-y-2 text-sm text-soft">
-          <li><b className="text-text">1.</b> Доороос онцлох болгох зараа сонгоод «Төлбөр төлөх» дарна — танд <b className="text-accent">4 оронтой гүйлгээний утга</b> гарна.</li>
-          <li><b className="text-text">2.</b> Доорх дансанд {FEATURE_PRICE.amount.toLocaleString('en-US')}₮ шилжүүлж, <b className="text-text">гүйлгээний утга дээр зөвхөн тэр 4 оронтой кодыг</b> бичнэ.</li>
-          <li><b className="text-text">3.</b> Төлбөрийг Telegram-аар баталгаажуулна. Ихэвчлэн хэдэн цагийн дотор зар тань онцлох болж, танд мэдэгдэл очно.</li>
-        </ol>
-        <BankCard bank={BANK} amount={FEATURE_PRICE.amount} telegram={telegram} />
-      </section>
+      {!selected || !open ? (
+        <div className="card p-5 text-sm text-muted">
+          Нийтлэгдсэн зар алга. Зар тань админ шалгаад нийтлэгдсэний дараа онцлох болгох боломжтой.
+        </div>
+      ) : (
+        <PaymentPanel
+          bank={BANK}
+          jobs={payJobs}
+          selectedId={selected.id}
+          payment={{ id: open._id.toString(), code: open.code, amount: open.amount, status: open.status as 'awaiting' | 'pending' }}
+          telegram={telegram}
+        />
+      )}
 
-      <section className="card space-y-3 p-5">
-        <h2 className="font-bold">Зар сонгох</h2>
-        {payJobs.length === 0 ? (
-          <p className="text-sm text-muted">Нийтлэгдсэн зар алга. Зар тань админ шалгаад нийтлэгдсэний дараа онцлох болгох боломжтой.</p>
-        ) : (
-          <PayForJob jobs={payJobs} amount={FEATURE_PRICE.amount} />
-        )}
-      </section>
-
-      {payments.length > 0 && (
+      {history.length > 0 && (
         <section className="space-y-2.5">
           <h2 className="font-bold">Төлбөрийн түүх</h2>
           <div className="card divide-y divide-line">
-            {payments.map((p) => {
+            {history.map((p) => {
               const s = STATUS[p.status as keyof typeof STATUS];
               return (
                 <div key={p._id.toString()} className="flex items-center gap-3 px-4 py-3 text-sm">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{(p.jobId as { title?: string })?.title ?? 'Устгагдсан зар'}</p>
                     <p className="text-xs text-muted">
-                      Утга <b className="text-soft">{p.code}</b> · {p.amount.toLocaleString('en-US')}₮ · {formatDateTime(p.createdAt)}
+                      Утга <b className="text-soft">{p.code}</b> · {p.amount.toLocaleString('en-US')}₮ · {formatDateTime(p.paidAt ?? p.createdAt)}
                       {p.status === 'rejected' && p.note && ` · ${p.note}`}
                     </p>
                   </div>
-                  <span className={`badge shrink-0 ${s.cls}`}>{s.label}</span>
+                  {s && <span className={`badge shrink-0 ${s.cls}`}>{s.label}</span>}
                 </div>
               );
             })}
