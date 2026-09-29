@@ -56,8 +56,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return !u.banned;
     },
     async jwt({ token, user, trigger }) {
-      // Нэвтрэх үед болон session.update() дуудагдах үед DB-ээс шинэчилнэ
-      if (user?.email || trigger === 'update') {
+      // Нэвтрэх, session.update() үед, мөн бүртгэл дуусаагүй (onboarded=false) бол
+      // хүсэлт бүрт DB-ээс шинэчилнэ — token хуучирч onboarding руу гацахаас сэргийлнэ
+      if (user?.email || trigger === 'update' || !token.onboarded) {
         const email = (user?.email ?? token.email) as string;
         const u = await loadUser(email, { name: user?.name, image: user?.image });
         token.uid = u._id.toString();

@@ -36,15 +36,8 @@ export const authConfig = {
       if (needs('/me') || needs('/notifications') || needs('/employer') || needs('/admin') || needs('/onboarding')) {
         if (!user) return false;
       }
-      if (user && !user.onboarded && !needs('/onboarding') && !pathname.startsWith('/api') && (needs('/me') || needs('/employer') || needs('/notifications'))) {
-        return Response.redirect(new URL('/onboarding', request.nextUrl));
-      }
-      if (needs('/employer') && user?.role !== 'employer' && user?.role !== 'admin') {
-        return Response.redirect(new URL('/', request.nextUrl));
-      }
-      if (needs('/admin') && user?.role !== 'admin') {
-        return Response.redirect(new URL('/', request.nextUrl));
-      }
+      // Onboarding болон role-ын шалгалтыг edge-д (хуучирсан token-оор) хийхгүй —
+      // server талд pageUser() DB-ээс шинэчилсэн session-оор шалгана.
       return true;
     },
   },
