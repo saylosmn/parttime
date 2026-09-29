@@ -16,8 +16,8 @@ export async function recomputeRating(userId: Types.ObjectId | string) {
   if (user?.role === 'employer' && count >= LIMITS.minRatingsForAvg && avg < LIMITS.lowRatingThreshold) {
     await notifyAdmins({
       type: 'low_rating',
-      title: 'Ажил олгогчийн үнэлгээ буурлаа',
-      body: `${user.companyName || user.name}: ${avg.toFixed(1)} (${count} үнэлгээ)`,
+      title: `Үнэлгээ буурсан: ${user.companyName || user.name}`,
+      body: `Дундаж үнэлгээ ${avg.toFixed(1)} болж 3.0-аас доош орлоо (${count} үнэлгээ). Зарууд, гомдлыг нь шалгана уу.`,
       link: '/admin/users',
     });
   }
@@ -33,22 +33,28 @@ export async function revealReviews(applicationId: Types.ObjectId | string, forc
   await Promise.all(hidden.map((r) => recomputeRating(r.toUserId)));
 }
 
-/** Онцлох/яаралтай зар нийтлэгдэхэд тухайн дүүргийн тохирох оюутнуудад мэдэгдэнэ (≤200). */
+/**
+ * Шинэ зар нийтлэгдэхэд (админ зөвшөөрөх үед) БҮХ оюутанд нэг удаа мэдэгдэнэ.
+ * Засвар хийгээд дахин зөвшөөрөгдсөн зарт давтан илгээхгүй (broadcastDone).
+ * Мэдэгдэл нь дангаараа ойлгомжтой байхаар: юу, хэн, хэдэн төгрөг, хаана, хэзээ.
+ */
 export async function broadcastJob(job: JobT) {
-  if (job.broadcastDone || job.status !== 'active' || !(job.isUrgent || job.isFeatured)) return;
-  const wanted: string[] = [];
-  if (job.tags?.includes('weekend')) wanted.push('weekend');
-  if (job.tags?.includes('evening')) wanted.push('weekday_evening');
-  const q: Record<string, unknown> = { role: 'student', banned: { $ne: true }, district: job.district };
-  if (wanted.length) q.availability = { $in: wanted };
-  const students = await User.find(q, '_id').limit(LIMITS.urgentBroadcastMax).lean();
-  await Job.updateOne({ _id: job._id }, { broadcastDone: true });
+  if (job.broadcastDone || job.status !== 'active') return;
+  // Зэрэг дуудагдвал давхар илгээхээс сэргийлж атомаар тэмдэглэнэ
+  const claimed = await Job.updateOne({ _id: job._id, broadcastDone: { $ne: true } }, { broadcastDone: true });
+  if (!claimed.modifiedCount) return;
+
+  const employer = await User.findById(job.employerId, 'name companyName').lean();
+  const company = employer?.companyName || employer?.name || 'Ажил олгогч';
+  const pay = formatPay(job.payAmount, job.payUnit as PayUnit);
+  const students = await User.find({ role: 'student', banned: { $ne: true } }, '_id').lean();
+
   await notifyMany(
     students.map((s) => s._id),
     {
-      type: 'job_nearby',
-      title: job.isUrgent ? 'Танай дүүрэгт яаралтай ажил' : 'Танай дүүрэгт шинэ онцлох ажил',
-      body: `${job.title}: ${formatPay(job.payAmount, job.payUnit as PayUnit)}`,
+      type: 'job_new',
+      title: job.isUrgent ? `Яаралтай ажил: ${job.title}` : `Шинэ ажлын зар: ${job.title}`,
+      body: `${company} · ${pay} · ${job.district} дүүрэг · ${job.schedule}. Дэлгэрэнгүйг харж өргөдлөө илгээгээрэй.`,
       link: `/jobs/${job._id}`,
     },
   );

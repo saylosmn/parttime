@@ -28,8 +28,8 @@ export const POST = handle(async (req: Request) => {
   });
   await notifyAdmins({
     type: 'job_pending',
-    title: 'Шинэ зар шалгуулахаар ирлээ',
-    body: job.title,
+    title: `Шалгах шинэ зар: «${job.title}»`,
+    body: 'Ажил олгогч шинэ зар илгээлээ. Зөвшөөрөх эсвэл шалтгаантай татгалзана уу.',
     link: '/admin',
   });
   return ok({ id: job._id.toString() }, 201);

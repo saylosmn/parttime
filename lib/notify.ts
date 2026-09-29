@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import { Notification, User } from '@/models';
-import { sendPushToUser } from './push';
+import { sendPushToUser, sendPushToUsers } from './push';
 import { adminEmails } from './config';
 
 export type NotifyType =
@@ -14,6 +14,7 @@ export type NotifyType =
   | 'job_approved'
   | 'job_rejected'
   | 'job_nearby'
+  | 'job_new'
   | 'review_request'
   | 'job_expiring'
   | 'low_rating'
@@ -39,17 +40,20 @@ export async function notify(userId: string | Types.ObjectId, n: NotifyInput) {
   }
 }
 
+/** Олон хэрэглэгчид (жишээ нь бүх оюутан) — DB-д багцаар бичиж, push-ийг нэг query-гээр авч зэрэг илгээнэ. */
 export async function notifyMany(userIds: (string | Types.ObjectId)[], n: NotifyInput) {
   if (!userIds.length) return;
-  await Notification.insertMany(userIds.map((u) => ({ userId: u, ...n, body: n.body ?? '' })));
-  // Push-ийг жижиг багцаар илгээнэ
-  const ids = userIds.map(String);
-  for (let i = 0; i < ids.length; i += 20) {
-    await Promise.all(
-      ids.slice(i, i + 20).map((id) =>
-        sendPushToUser(id, { title: n.title, body: n.body ?? '', link: n.link, tag: n.type }).catch(() => {}),
-      ),
+  const body = n.body ?? '';
+  for (let i = 0; i < userIds.length; i += 1000) {
+    await Notification.insertMany(
+      userIds.slice(i, i + 1000).map((u) => ({ userId: u, ...n, body })),
+      { ordered: false },
     );
+  }
+  try {
+    await sendPushToUsers(userIds.map(String), { title: n.title, body, link: n.link, tag: n.type });
+  } catch (e) {
+    console.warn('notifyMany push failed', e);
   }
 }
 

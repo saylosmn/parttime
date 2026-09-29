@@ -6,6 +6,9 @@ import { broadcastJob } from '@/lib/services';
 
 type Ctx = { params: { id: string } };
 
+// Зар зөвшөөрөхөд бүх оюутанд мэдэгдэл илгээдэг тул хугацааг сунгана
+export const maxDuration = 60;
+
 export const PATCH = handle(async (req: Request, { params }: Ctx) => {
   await requireUser(['admin']);
   const input = adminJobSchema.parse(await req.json());
@@ -19,8 +22,8 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       await job.save();
       await notify(job.employerId, {
         type: 'job_approved',
-        title: 'Таны зар нийтлэгдлээ',
-        body: `«${job.title}»`,
+        title: `Таны «${job.title}» зар нийтлэгдлээ`,
+        body: 'Админ шалгаж зөвшөөрлөө. Зар одоо бүх оюутанд харагдаж, тэдэнд мэдэгдэл очлоо. Өргөдөл ирэхэд танд мэдэгдэнэ.',
         link: `/jobs/${job._id}`,
       });
       break;
@@ -30,8 +33,8 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       await job.save();
       await notify(job.employerId, {
         type: 'job_rejected',
-        title: 'Таны зар татгалзагдлаа',
-        body: `«${job.title}»: ${input.reason}`,
+        title: `Таны «${job.title}» зар нийтлэгдсэнгүй`,
+        body: `Шалтгаан: ${input.reason}. Зараа засаад дахин илгээх боломжтой.`,
         link: `/employer/jobs/${job._id}/edit`,
       });
       break;

@@ -11,6 +11,6 @@ export const POST = handle(async (req: Request) => {
   const dup = await Report.exists({ jobId, reporterId: me.id, resolved: false });
   if (dup) throw new HttpError(409, 'Та энэ зарын талаар гомдол илгээсэн байна');
   await Report.create({ jobId, reporterId: me.id, reason });
-  await notifyAdmins({ type: 'report_new', title: 'Шинэ гомдол', body: `«${job.title}»: ${reason}`, link: '/admin/reports' });
+  await notifyAdmins({ type: 'report_new', title: `Шинэ гомдол: «${job.title}»`, body: `Шалтгаан: ${reason}`, link: '/admin/reports' });
   return ok({}, 201);
 });

@@ -32,8 +32,8 @@ export async function GET(req: Request) {
   for (const j of expiring) {
     await notify(j.employerId, {
       type: 'job_expiring',
-      title: 'Таны зар 2 хоногийн дараа хаагдана',
-      body: `«${j.title}»`,
+      title: `«${j.title}» зар 2 хоногийн дараа хаагдана`,
+      body: 'Хугацаа дуусахаас өмнө хүнээ олоогүй бол зараа засаж дахин нийтлүүлэх эсвэл онцлох болгох боломжтой.',
       link: `/employer/jobs/${j._id}`,
     });
     await Job.updateOne({ _id: j._id }, { expiryWarned: true });

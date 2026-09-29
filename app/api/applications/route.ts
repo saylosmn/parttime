@@ -23,7 +23,7 @@ export const POST = handle(async (req: Request) => {
   await notify(job.employerId, {
     type: 'application_new',
     title: `«${job.title}» зард шинэ өргөдөл ирлээ`,
-    body: `${me.name ?? 'Оюутан'} өргөдөл илгээлээ`,
+    body: `${me.name ?? 'Оюутан'} өргөдөл илгээлээ. Профайлыг нь хараад «Урих» эсвэл «Татгалзах»-ыг сонгоно уу.`,
     link: `/employer/jobs/${job._id}`,
   });
   return ok({ id: app._id.toString() }, 201);

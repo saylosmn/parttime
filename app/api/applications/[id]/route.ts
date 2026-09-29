@@ -43,8 +43,8 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       await app.save();
       await notify(app.studentId, {
         type: 'interview_invite',
-        title: 'Ярилцлагад урилаа',
-        body: `${employerName} таныг ${formatDateTime(input.interviewAt)}-д урьж байна`,
+        title: `Ярилцлагын урилга: «${jobTitle}»`,
+        body: `${employerName} таныг ${formatDateTime(input.interviewAt)}-д ярилцлагад урьж байна. «Зөвшөөрөх» эсвэл «Цаг солих»-ыг дарж хариулна уу.`,
         link: '/notifications',
         meta: { applicationId: app._id.toString() },
       });
@@ -56,8 +56,8 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       await app.save();
       await notify(app.studentId, {
         type: 'application_rejected',
-        title: `«${jobTitle}»`,
-        body: 'Уучлаарай, энэ удаа өөр хүн сонгогдлоо',
+        title: `«${jobTitle}» өргөдлийн хариу`,
+        body: `Уучлаарай, ${employerName} энэ удаа өөр хүн сонгосон байна. Бусад шинэ заруудаас өргөдөл илгээгээрэй.`,
         link: '/me/applications',
       });
       break;
@@ -68,8 +68,8 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       await app.save();
       await notify(app.studentId, {
         type: 'application_hired',
-        title: 'Баяр хүргэе! Та ажилд орлоо',
-        body: `${employerName}: «${jobTitle}»`,
+        title: `Баяр хүргэе! Та «${jobTitle}» ажилд орлоо`,
+        body: `${employerName} таныг ажилд авлаа. Ажлын дэлгэрэнгүйг ажил олгогчтой утсаар тохиролцоорой.`,
         link: '/me/applications',
       });
       break;
@@ -82,15 +82,15 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       const meta = { applicationId: app._id.toString() };
       await notify(app.studentId, {
         type: 'review_request',
-        title: 'Ажлаа үнэлээрэй',
-        body: `«${jobTitle}» ажил дууслаа. Ажил олгогчийг үнэлнэ үү.`,
+        title: `«${jobTitle}» ажил дууслаа — үнэлгээ өгнө үү`,
+        body: `${employerName}-тай ажилласан туршлагаа 1–5 одоор үнэлээрэй. Таны үнэлгээ бусад оюутнуудад тусална.`,
         link: '/notifications',
         meta,
       });
       await notify(app.employerId, {
         type: 'review_request',
-        title: 'Ажлаа үнэлээрэй',
-        body: `${studentName}-ийн «${jobTitle}» ажил дууслаа. Оюутныг үнэлнэ үү.`,
+        title: `«${jobTitle}» ажил дууслаа — оюутныг үнэлнэ үү`,
+        body: `${studentName}-ийн ажлыг 1–5 одоор үнэлээрэй. Хоёр тал үнэлсний дараа үнэлгээ нийтэд харагдана.`,
         link: `/employer/jobs/${app.jobId}`,
         meta,
       });
@@ -102,8 +102,8 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       await app.save();
       await notify(app.employerId, {
         type: 'interview_accepted',
-        title: `${studentName} урилгыг зөвшөөрлөө`,
-        body: `«${jobTitle}» · ${app.interviewAt ? formatDateTime(app.interviewAt) : ''}`,
+        title: `${studentName} ярилцлагад ирнэ`,
+        body: `«${jobTitle}» ажлын ярилцлагын урилгыг зөвшөөрлөө${app.interviewAt ? `: ${formatDateTime(app.interviewAt)}` : ''}.`,
         link: `/employer/jobs/${app.jobId}`,
       });
       break;
@@ -115,8 +115,8 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       await app.save();
       await notify(app.employerId, {
         type: 'interview_reschedule',
-        title: `${studentName} цаг солихыг хүслээ`,
-        body: input.note,
+        title: `${studentName} ярилцлагын цаг солихыг хүслээ`,
+        body: `«${jobTitle}»: "${input.note}". Шинэ цаг сонгож дахин урина уу.`,
         link: `/employer/jobs/${app.jobId}`,
       });
       break;

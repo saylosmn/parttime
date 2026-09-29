@@ -84,8 +84,8 @@ export async function markViewed(employerId: string, jobId?: string) {
     apps.map((a) =>
       notify(a.studentId, {
         type: 'application_viewed',
-        title: 'Таны өргөдлийг ажил олгогч харлаа',
-        body: `«${titles.get(a.jobId.toString()) ?? ''}»`,
+        title: `«${titles.get(a.jobId.toString()) ?? ''}» — өргөдлийг тань харлаа`,
+        body: 'Ажил олгогч таны өргөдлийг нээж үзлээ. Урилга эсвэл хариу ирэхэд танд шууд мэдэгдэнэ.',
         link: '/me/applications',
       }),
     ),

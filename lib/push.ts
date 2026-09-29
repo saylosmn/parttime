@@ -13,24 +13,43 @@ function configure() {
 }
 
 export type PushPayload = { title: string; body: string; link: string; tag?: string };
+type Sub = { _id: unknown; endpoint: string; keys?: { p256dh: string; auth: string } | null };
 
-/** Хэрэглэгчийн бүх төхөөрөмж рүү push илгээнэ. 404/410 бол subscription-ыг устгана. */
-export async function sendPushToUser(userId: string, payload: PushPayload) {
-  if (!configure()) return;
-  const subs = await PushSubscription.find({ userId }).lean();
-  await Promise.all(
-    subs.map(async (s) => {
+/** Subscription-уудад зэрэг (concurrency хязгаартай) илгээнэ. 404/410 бол устгана. */
+async function deliver(subs: Sub[], payload: PushPayload, concurrency = 50) {
+  const data = JSON.stringify(payload);
+  const dead: unknown[] = [];
+  let i = 0;
+  const worker = async () => {
+    while (i < subs.length) {
+      const s = subs[i++];
       try {
         await webpush.sendNotification(
           { endpoint: s.endpoint, keys: { p256dh: s.keys!.p256dh, auth: s.keys!.auth } },
-          JSON.stringify(payload),
+          data,
           { TTL: 60 * 60 * 24 },
         );
       } catch (e) {
         const code = (e as { statusCode?: number }).statusCode;
-        if (code === 404 || code === 410) await PushSubscription.deleteOne({ _id: s._id });
+        if (code === 404 || code === 410) dead.push(s._id);
         else console.warn('push error', code);
       }
-    }),
-  );
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, subs.length) }, worker));
+  if (dead.length) await PushSubscription.deleteMany({ _id: { $in: dead } });
+}
+
+/** Хэрэглэгчийн бүх төхөөрөмж рүү push илгээнэ. */
+export async function sendPushToUser(userId: string, payload: PushPayload) {
+  if (!configure()) return;
+  const subs = await PushSubscription.find({ userId }).lean();
+  await deliver(subs, payload);
+}
+
+/** Олон хэрэглэгчид нэг query-гээр subscription авч илгээнэ (бүх оюутанд зарлах гэх мэт). */
+export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
+  if (!configure() || !userIds.length) return;
+  const subs = await PushSubscription.find({ userId: { $in: userIds } }).lean();
+  await deliver(subs, payload);
 }
