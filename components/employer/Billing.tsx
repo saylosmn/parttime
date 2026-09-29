@@ -101,19 +101,19 @@ export function PaymentPanel({
           <button className="btn-primary w-full" disabled={busy} onClick={() => act('paid')}>
             <Check size={18} /> Төлбөр шилжүүлсэн
           </button>
-          <p className="text-center text-xs text-muted">Шилжүүлсний дараа дарна уу — Telegram-аар шалгаж баталгаажуулна.</p>
+          <p className="text-center text-xs text-muted">Шилжүүлсний дараа дарна уу — бид гүйлгээг шалгаад баталгаажуулна.</p>
         </div>
       ) : (
         <div className="rounded-btn border border-urgent/40 bg-[#2a1f08] p-4 text-sm">
-          <p className="font-semibold text-urgent">Шалгаж байна</p>
-          <p className="mt-1 text-soft">Таны төлбөрийг Telegram-аар шалгаж байна. Баталгаажмагц зар тань онцлох болж, танд мэдэгдэл очно.</p>
+          <p className="font-semibold text-urgent">Гүйлгээг шалгаж байна</p>
+          <p className="mt-1 text-soft">Таны гүйлгээг шалгаж байна. Баталгаажмагц зар тань онцлох болж, танд мэдэгдэл очно.</p>
         </div>
       )}
 
       <button
         className="btn-ghost w-full text-danger"
         disabled={busy}
-        onClick={() => confirm(`Гүйлгээ ${payment.code}-ийг цуцлах уу?${payment.status === 'pending' ? ' Хэрэв мөнгө шилжүүлсэн бол Telegram-аар холбогдоно уу.' : ''}`) && act('cancel')}
+        onClick={() => confirm(`Гүйлгээ ${payment.code}-ийг цуцлах уу?${payment.status === 'pending' ? ' Хэрэв мөнгө шилжүүлсэн бол бидэнтэй холбогдоно уу.' : ''}`) && act('cancel')}
       >
         <X size={16} /> Гүйлгээ цуцлах
       </button>

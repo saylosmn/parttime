@@ -9,7 +9,7 @@ export const metadata = { title: 'Төлбөр' };
 export const dynamic = 'force-dynamic';
 
 const STATUS = {
-  pending: { label: 'Шалгаж байна', cls: 'bg-[#2a1f08] text-urgent' },
+  pending: { label: 'Гүйлгээг шалгаж байна', cls: 'bg-[#2a1f08] text-urgent' },
   confirmed: { label: 'Баталгаажсан', cls: 'bg-green-bg text-green-soft border border-green-line' },
   rejected: { label: 'Татгалзсан', cls: 'bg-[#2a1212] text-[#F26B6B]' },
   cancelled: { label: 'Цуцалсан', cls: 'bg-surface-2 text-muted' },

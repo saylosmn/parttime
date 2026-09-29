@@ -46,7 +46,7 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
     await notify(payment.employerId, {
       type: 'payment_rejected',
       title: `Төлбөр баталгаажсангүй (гүйлгээний утга ${payment.code})`,
-      body: `Шалтгаан: ${input.note}. Асуух зүйл байвал Telegram-аар холбогдоно уу.`,
+      body: `Шалтгаан: ${input.note}. Асуух зүйл байвал бидэнтэй холбогдоно уу.`,
       link: '/employer/billing',
     });
   }
