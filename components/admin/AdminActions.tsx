@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/client';
+import { toast } from '@/components/Toast';
 
 function useAct() {
   const router = useRouter();
@@ -13,8 +14,13 @@ function useAct() {
     setErr('');
     const r = await api(url, 'PATCH', body);
     setBusy(false);
-    if (!r.ok) setErr(r.error);
-    else router.refresh();
+    if (!r.ok) {
+      setErr(r.error);
+      toast(r.error, 'err');
+    } else {
+      toast('Хадгалагдлаа');
+      router.refresh();
+    }
   }
   return { busy, err, run };
 }

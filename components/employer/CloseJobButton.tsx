@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api } from '@/lib/client';
+import { toast } from '@/components/Toast';
 
 export function CloseJobButton({ id }: { id: string }) {
   const router = useRouter();
@@ -14,7 +15,8 @@ export function CloseJobButton({ id }: { id: string }) {
       onClick={async () => {
         if (!confirm('Зарыг хаах уу? Шинэ өргөдөл ирэхээ болино.')) return;
         setBusy(true);
-        await api(`/api/jobs/${id}`, 'DELETE');
+        const r = await api(`/api/jobs/${id}`, 'DELETE');
+        toast(r.ok ? 'Зар хаагдлаа' : r.error, r.ok ? 'ok' : 'err');
         router.refresh();
         setBusy(false);
       }}

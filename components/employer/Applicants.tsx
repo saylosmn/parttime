@@ -9,6 +9,7 @@ import { StudentProfileDialog } from './StudentProfileDialog';
 import { Avatar, Rating, StatusBadge } from '@/components/ui';
 import { ReviewForm } from '@/components/ReviewForm';
 import { api } from '@/lib/client';
+import { toast } from '@/components/Toast';
 import { formatDateTime } from '@/lib/config';
 import type { ApplicantView } from '@/lib/employer';
 
@@ -30,13 +31,24 @@ function ApplicantRow({ a, showJob, compact }: { a: ApplicantView; showJob: bool
   const [inviting, setInviting] = useState(false);
   const [profile, setProfile] = useState(false);
 
-  async function act(body: object) {
+  const DONE: Record<string, string> = {
+    invite: 'Урилга илгээгдлээ — оюутанд мэдэгдэл очлоо',
+    reject: 'Татгалзлаа — оюутанд эелдэг хариу очлоо',
+    hire: 'Ажилд авлаа — оюутанд мэдэгдэл очлоо',
+    complete: 'Ажил дууслаа — хоёр талд үнэлгээний хүсэлт очлоо',
+  };
+
+  async function act(body: { action: string; [k: string]: unknown }) {
     setBusy(true);
     setErr('');
     const r = await api(`/api/applications/${a.id}`, 'PATCH', body);
     setBusy(false);
-    if (!r.ok) return setErr(r.error);
+    if (!r.ok) {
+      toast(r.error, 'err');
+      return setErr(r.error);
+    }
     setInviting(false);
+    toast(DONE[body.action] ?? 'Хадгалагдлаа');
     router.refresh();
   }
 
@@ -116,6 +128,15 @@ function ApplicantRow({ a, showJob, compact }: { a: ApplicantView; showJob: bool
             </p>
           )}
           <div className="flex flex-wrap gap-2">
+            {open && (a.status === 'sent' || a.status === 'viewed') && (
+              <button
+                className="btn-ghost"
+                disabled={busy}
+                onClick={() => confirm(`${s.name}-г ярилцлагагүйгээр шууд ажилд авах уу?`) && act({ action: 'hire' })}
+              >
+                Шууд ажилд авах
+              </button>
+            )}
             {a.status === 'invited' && (
               <>
                 <button className="btn-primary" disabled={busy} onClick={() => act({ action: 'hire' })}>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, Copy, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/client';
+import { toast } from '@/components/Toast';
 
 /** Зарын хуудсан дээрх хурдан үйлдлүүд: ажилтан олдсон / дахин нийтлэх / хуулах. */
 export function JobActions({ id, status, expired, waiting }: { id: string; status: string; expired: boolean; waiting: number }) {
@@ -17,9 +18,13 @@ export function JobActions({ id, status, expired, waiting }: { id: string; statu
     setMsg('');
     const r = await api<{ rejected?: number; status?: string }>(`/api/jobs/${id}/${action}`, 'POST');
     setBusy(false);
-    if (!r.ok) return setMsg(r.error);
+    if (!r.ok) {
+      toast(r.error, 'err');
+      return setMsg(r.error);
+    }
     if (action === 'fill') setMsg(`Зар хаагдлаа. ${r.data.rejected ?? 0} оюутанд хариу автоматаар илгээгдлээ.`);
     else setMsg(r.data.status === 'active' ? 'Зар дахин нийтлэгдлээ (30 хоног).' : 'Зар дахин нийтлэхээр шалгалтад орлоо.');
+    toast(action === 'fill' ? 'Зар хаагдаж, оюутнуудад хариу илгээгдлээ' : 'Зар дахин нийтлэгдлээ');
     router.refresh();
   }
 

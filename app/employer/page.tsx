@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Inbox, Plus, Zap } from 'lucide-react';
 import { pageUser } from '@/lib/guards';
-import { Application, Job, User } from '@/models';
+import { Application, Job, PushSubscription, User } from '@/models';
 import { loadApplicants } from '@/lib/employer';
 import { applicationCounts, newApplicationCounts } from '@/lib/services';
 import { LIMITS } from '@/lib/config';
@@ -10,6 +10,7 @@ import { BellButton } from '@/components/Nav';
 import { PushPrompt } from '@/components/Pwa';
 import { ApplicantList } from '@/components/employer/Applicants';
 import { JobStatusBadge } from '@/components/employer/JobStatusBadge';
+import { GettingStarted } from '@/components/employer/GettingStarted';
 
 export const metadata = { title: 'Самбар' };
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,32 @@ export default async function EmployerDashboard() {
   const featured = active.filter((j) => j.isFeatured).length;
   const [counts, freshCounts] = await Promise.all([applicationCounts(jobs.map((j) => j._id)), newApplicationCounts(jobs.map((j) => j._id))]);
   const rated = (user?.ratingCount ?? 0) >= LIMITS.minRatingsForAvg;
+  const [jobCount, hasPush] = await Promise.all([
+    Job.countDocuments({ employerId: me.id }),
+    PushSubscription.exists({ userId: me.id }),
+  ]);
+  const steps = [
+    {
+      done: Boolean(user?.companyAddress || user?.companyMapUrl),
+      title: 'Компанийн хаяг, газрын зургаа оруулах',
+      body: 'Нэг удаа оруулбал шинэ зар бүрт автоматаар бөглөгдөнө.',
+      href: '/employer/profile',
+      cta: 'Оруулах',
+    },
+    { done: jobCount > 0, title: 'Анхны зараа нэмэх', body: 'Гараг, цагаа товшоод 2 минутад бэлэн.', href: '/employer/jobs/new', cta: 'Зар нэмэх' },
+    {
+      done: Boolean(hasPush),
+      title: 'Утсандаа мэдэгдэл асаах',
+      body: 'Өргөдөл ирмэгц утсанд мэдэгдэл очно.',
+      href: '/employer/profile',
+      cta: 'Асаах',
+    },
+    {
+      done: Boolean(user?.verified),
+      title: 'Баталгаажсан тэмдэг авах',
+      body: 'Баталгаажсан бол зар тань админ хүлээлгүй шууд нийтлэгдэж, оюутнууд илүү итгэнэ. Админд хандаж бүртгэлийн гэрчилгээгээ илгээнэ үү.',
+    },
+  ];
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -48,6 +75,7 @@ export default async function EmployerDashboard() {
       </header>
 
       <PushPrompt />
+      <GettingStarted steps={steps} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Идэвхтэй зар" value={active.length} hint={featured ? `${featured} нь онцлох` : undefined} />

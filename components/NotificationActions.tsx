@@ -1,8 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/client';
+import { toast } from '@/components/Toast';
+
+/** Мэдэгдлийн хуудас нээгдэхэд хонхны тоог шинэчлэх дохио. */
+export function SeenSignal() {
+  useEffect(() => {
+    window.dispatchEvent(new Event('notifications:changed'));
+  }, []);
+  return null;
+}
 
 export function MarkAllRead() {
   const router = useRouter();
@@ -34,9 +43,10 @@ export function InviteActions({ applicationId }: { applicationId: string }) {
   async function send(body: object) {
     setBusy(true);
     setErr('');
-    const r = await api(`/api/applications/${applicationId}`, 'PATCH', body);
+    const r = await api<Record<string, unknown>>(`/api/applications/${applicationId}`, 'PATCH', body);
     setBusy(false);
     if (!r.ok) return setErr(r.error);
+    toast((body as { action: string }).action === 'accept_invite' ? 'Урилгыг зөвшөөрлөө — ажил олгогчид мэдэгдэл очлоо' : 'Цаг солих хүсэлт илгээгдлээ');
     router.refresh();
   }
 

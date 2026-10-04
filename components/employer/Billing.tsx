@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Copy, Send, X } from 'lucide-react';
 import { api } from '@/lib/client';
+import { toast } from '@/components/Toast';
 
 function CopyRow({ label, value, mono = false, highlight = false }: { label: string; value: string; mono?: boolean; highlight?: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -57,6 +58,7 @@ export function PaymentPanel({
     const r = await api(`/api/payments/${payment.id}`, 'PATCH', { action });
     setBusy(false);
     if (!r.ok) return setErr(r.error);
+    toast(action === 'paid' ? 'Баярлалаа! Гүйлгээг шалгаад баталгаажуулна' : 'Гүйлгээ цуцлагдлаа');
     router.refresh();
   }
 

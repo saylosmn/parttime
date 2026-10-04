@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Bookmark } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '@/lib/client';
+import { toast } from '@/components/Toast';
 
 /** Зар хадгалах товч. Нэвтрээгүй бол нэвтрэх хуудас руу. */
 export function SaveButton({ jobId, initial, canSave, loggedIn }: { jobId: string; initial: boolean; canSave: boolean; loggedIn: boolean }) {
@@ -26,8 +27,13 @@ export function SaveButton({ jobId, initial, canSave, loggedIn }: { jobId: strin
         setBusy(true);
         const r = await api('/api/saved', 'POST', { jobId, saved: next });
         setBusy(false);
-        if (!r.ok) setSaved(!next);
-        else router.refresh();
+        if (!r.ok) {
+          setSaved(!next);
+          toast(r.error, 'err');
+        } else {
+          toast(next ? 'Зар хадгалагдлаа — Профайл → Хадгалсан зарууд' : 'Хадгалснаас хаслаа');
+          router.refresh();
+        }
       }}
     >
       <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} />

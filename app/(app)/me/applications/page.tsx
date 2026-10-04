@@ -7,6 +7,7 @@ import { formatDateTime, timeAgo, type AppStatus } from '@/lib/config';
 import { Avatar, EmptyState, StatusBadge } from '@/components/ui';
 import { PushPrompt } from '@/components/Pwa';
 import { ReviewForm } from '@/components/ReviewForm';
+import { InviteActions } from '@/components/NotificationActions';
 
 export const metadata = { title: 'Миний өргөдлүүд' };
 export const dynamic = 'force-dynamic';
@@ -104,12 +105,12 @@ export default async function MyApplications(props: { searchParams: Promise<{ ta
                     ) : a.interviewResponse === 'reschedule' ? (
                       <span className="text-xs font-semibold text-urgent">Цаг солих хүсэлт</span>
                     ) : (
-                      <Link href="/notifications" className="text-sm font-bold text-accent">
-                        Хариулах
-                      </Link>
+<span className="text-xs font-semibold text-urgent">Хариу хүлээж байна</span>
                     )}
                   </div>
                 )}
+
+                {a.status === 'invited' && !a.interviewResponse && <InviteActions applicationId={a._id.toString()} />}
 
                 {['invited', 'hired', 'completed'].includes(a.status) && (
                   <Link href={`/chat/${a._id}`} className="btn-ghost mt-3 w-full">

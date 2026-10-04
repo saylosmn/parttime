@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { Star } from 'lucide-react';
 import { REVIEW_TAGS } from '@/lib/config';
 import { api } from '@/lib/client';
+import { toast } from '@/components/Toast';
 
 export function ReviewForm({ applicationId, direction }: { applicationId: string; direction: keyof typeof REVIEW_TAGS }) {
   const router = useRouter();
@@ -58,6 +59,7 @@ export function ReviewForm({ applicationId, direction }: { applicationId: string
               const r = await api('/api/reviews', 'POST', { applicationId, stars, tags, comment: comment || undefined });
               setBusy(false);
               if (!r.ok) return setErr(r.error);
+              toast('Үнэлгээ илгээгдлээ. Баярлалаа!');
               setDone(true);
               router.refresh();
             }}

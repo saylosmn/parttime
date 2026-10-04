@@ -7,6 +7,7 @@ import { MapPin, Plus, X, Zap } from 'lucide-react';
 import { api } from '@/lib/client';
 import { PAY_UNITS, TAGS, type JobTag, type PayUnit } from '@/lib/config';
 import { requestPushPromptLater } from '../Pwa';
+import { toast } from '../Toast';
 import { Field, DistrictSelect } from './fields';
 import { SchedulePicker } from './SchedulePicker';
 
@@ -38,12 +39,18 @@ const EMPTY: JobValues = {
   isUrgent: false,
 };
 
+/** Тухайн талбарын доорх алдааны мессеж. */
+function FieldError({ msg }: { msg?: string }) {
+  return msg ? <p className="mt-1 text-sm font-semibold text-danger">{msg}</p> : null;
+}
+
 export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobValues> }) {
   const router = useRouter();
   const [v, setV] = useState<JobValues>({ ...EMPTY, ...initial });
   const [req, setReq] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [fieldErr, setFieldErr] = useState<Record<string, string>>({});
   const set = (p: Partial<JobValues>) => setV((s) => ({ ...s, ...p }));
 
   function addReq() {
@@ -52,16 +59,35 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
     setReq('');
   }
 
+  /** Алдаатай талбаруудыг тэмдэглэж, эхнийх рүү нь гүйлгэнэ. */
+  function showErrors(f: Record<string, string>) {
+    setFieldErr(f);
+    setErr('Улаанаар тэмдэглэсэн талбаруудыг засна уу');
+    const first = ['title', 'payAmount', 'schedule', 'district', 'mapUrl', 'description'].find((k) => f[k]) ?? Object.keys(f)[0];
+    document.getElementById(`f-${first}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr('');
-    if (!v.payAmount) return setErr('Цалингийн дүн заавал');
+    setFieldErr({});
+    const local: Record<string, string> = {};
+    if (!v.payAmount) local.payAmount = 'Цалингийн дүн заавал';
+    if (!v.schedule) local.schedule = 'Ажиллах гараг, цагаа сонгоно уу';
+    if (!v.district) local.district = 'Дүүрэг сонгоно уу';
+    if (v.description.trim().length < 20) local.description = 'Хийх ажлаа дор хаяж 20 тэмдэгтээр тайлбарлана уу';
+    if (Object.keys(local).length) return showErrors(local);
     setBusy(true);
     const body = { ...v, payAmount: Number(v.payAmount), address: v.address || undefined, mapUrl: v.mapUrl || undefined };
     const r = id ? await api(`/api/jobs/${id}`, 'PATCH', body) : await api<{ id: string }>('/api/jobs', 'POST', body);
     setBusy(false);
-    if (!r.ok) return setErr(r.error);
+    if (!r.ok) {
+      if (r.fields && Object.keys(r.fields).length) return showErrors(r.fields);
+      return setErr(r.error);
+    }
     requestPushPromptLater();
+    const st = (r.data as { status?: string }).status;
+    toast(id ? (st === 'pending' ? 'Хадгалагдлаа — чухал өөрчлөлт тул шалгалтад орлоо' : 'Хадгалагдлаа') : st === 'active' ? 'Зар нийтлэгдлээ!' : 'Зар илгээгдлээ — админ шалгасны дараа нийтлэгдэнэ');
     const newId = id ?? (r.data as { id: string }).id;
     router.push(`/employer/jobs/${newId}`);
     router.refresh();
@@ -69,11 +95,14 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <Field label="Ажлын нэр">
-        <input className="input" value={v.title} onChange={(e) => set({ title: e.target.value })} placeholder="Жишээ нь: Бармены туслах" required maxLength={80} />
-      </Field>
+      <div id="f-title">
+        <Field label="Ажлын нэр">
+          <input className="input" value={v.title} onChange={(e) => set({ title: e.target.value })} placeholder="Жишээ нь: Бармены туслах" required maxLength={80} />
+        </Field>
+        <FieldError msg={fieldErr.title} />
+      </div>
 
-      <div>
+      <div id="f-payAmount">
         <span className="label">Цалин (заавал)</span>
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -99,9 +128,10 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
           </select>
         </div>
         <p className="mt-1 text-xs text-muted">«Тохиролцоно» гэж бичихгүй — тодорхой дүн оруулна.</p>
+        <FieldError msg={fieldErr.payAmount} />
       </div>
 
-      <div>
+      <div id="f-schedule">
         <span className="label">Хуваарь (заавал)</span>
         <SchedulePicker
           value={v.schedule}
@@ -116,18 +146,22 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
             })
           }
         />
+        <FieldError msg={fieldErr.schedule} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Дүүрэг (заавал)">
-          <DistrictSelect value={v.district} onChange={(district) => set({ district })} />
-        </Field>
+        <div id="f-district">
+          <Field label="Дүүрэг (заавал)">
+            <DistrictSelect value={v.district} onChange={(district) => set({ district })} />
+          </Field>
+          <FieldError msg={fieldErr.district} />
+        </div>
         <Field label="Хаяг">
           <input className="input" value={v.address} onChange={(e) => set({ address: e.target.value })} placeholder="1-р хороо, ... төвийн 2 давхар" maxLength={200} />
         </Field>
       </div>
 
-      <div>
+      <div id="f-mapUrl">
         <span className="label">Google Maps холбоос</span>
         <div className="relative">
           <MapPin size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
@@ -149,11 +183,25 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
             Холбоосыг шалгах ↗
           </a>
         )}
+        <FieldError msg={fieldErr.mapUrl} />
       </div>
 
-      <Field label="Хийх ажил">
-        <textarea className="input py-3" rows={5} value={v.description} onChange={(e) => set({ description: e.target.value })} required minLength={20} maxLength={3000} />
-      </Field>
+      <div id="f-description">
+        <Field label="Хийх ажил">
+          <textarea
+            className="input py-3"
+            rows={5}
+            value={v.description}
+            onChange={(e) => set({ description: e.target.value })}
+            placeholder="Юу хийх, хаана, хэнтэй ажиллах, хоол/унаа өгөх эсэх гэх мэт"
+            required
+            minLength={20}
+            maxLength={3000}
+          />
+        </Field>
+        <p className="mt-1 text-right text-xs text-muted">{v.description.trim().length}/20+ тэмдэгт</p>
+        <FieldError msg={fieldErr.description} />
+      </div>
 
       <div>
         <span className="label">Шаардлага</span>

@@ -6,7 +6,7 @@ import { Application, Notification, Review } from '@/models';
 import { timeAgo } from '@/lib/config';
 import { EmptyState } from '@/components/ui';
 import { PushPrompt } from '@/components/Pwa';
-import { InviteActions, MarkAllRead } from '@/components/NotificationActions';
+import { InviteActions, SeenSignal } from '@/components/NotificationActions';
 import { ReviewForm } from '@/components/ReviewForm';
 
 export const metadata = { title: 'Мэдэгдэл' };
@@ -49,6 +49,8 @@ export default async function NotificationsPage() {
   const appMap = new Map(apps.map((a) => [a._id.toString(), a]));
   const reviewed = new Set(reviews.map((r) => r.applicationId.toString()));
   const unread = items.filter((n) => !n.read).length;
+  // Хуудсыг нээсэн нь уншсан гэсэн үг — хонхны тоо арилна (энэ удаагийн жагсаалтад шинэ нь тодорсон хэвээр)
+  if (unread) await Notification.updateMany({ userId: me.id, read: false, _id: { $in: items.map((n) => n._id) } }, { read: true });
 
   const groups = new Map<string, typeof items>();
   for (const n of items) {
@@ -63,7 +65,7 @@ export default async function NotificationsPage() {
           <ChevronLeft size={20} />
         </Link>
         <h1 className="h-display flex-1 text-2xl">Мэдэгдэл</h1>
-        {unread > 0 && <MarkAllRead />}
+        {unread > 0 && <SeenSignal />}
       </div>
 
       <PushPrompt force />
