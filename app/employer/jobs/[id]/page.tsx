@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ChevronLeft, Eye, Inbox, Pencil } from 'lucide-react';
 import { Types } from 'mongoose';
 import { pageUser } from '@/lib/guards';
+import { dbConnect } from '@/lib/db';
 import { Job } from '@/models';
 import { loadApplicants, markViewed } from '@/lib/employer';
 import { formatPay, type PayUnit } from '@/lib/config';
@@ -12,6 +13,13 @@ import { JobStatusBadge } from '@/components/employer/JobStatusBadge';
 import { CloseJobButton } from '@/components/employer/CloseJobButton';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  if (!Types.ObjectId.isValid(params.id)) return { title: 'Зар' };
+  await dbConnect();
+  const job = await Job.findById(params.id, 'title').lean();
+  return { title: job ? `${job.title} · Өргөдлүүд` : 'Зар' };
+}
 
 export default async function EmployerJobPage({ params }: { params: { id: string } }) {
   const me = await pageUser(['employer']);
