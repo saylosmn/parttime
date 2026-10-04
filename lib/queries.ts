@@ -14,6 +14,7 @@ export type JobCard = {
   isUrgent: boolean;
   isFeatured: boolean;
   createdAt: string;
+  location?: { lat: number; lng: number } | null;
   employer: { _id: string; name: string; verified: boolean; ratingAvg: number; ratingCount: number };
 };
 
@@ -55,6 +56,7 @@ export function toCard(j: any, now = new Date()): JobCard {
     tags: j.tags ?? [],
     isUrgent: Boolean(j.isUrgent),
     isFeatured: Boolean(j.isFeatured && (!j.featuredUntil || new Date(j.featuredUntil) > now)),
+    location: j.location?.lat != null && j.location?.lng != null ? { lat: j.location.lat, lng: j.location.lng } : null,
     createdAt: j.createdAt,
     employer: {
       _id: e._id?.toString() ?? '',

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
-import { CalendarDays, ChevronDown, Phone, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, MessageCircle, Phone, X } from 'lucide-react';
 import { Avatar, Rating, StatusBadge } from '@/components/ui';
 import { ReviewForm } from '@/components/ReviewForm';
 import { api } from '@/lib/client';
@@ -119,6 +119,11 @@ function ApplicantRow({ a, showJob, compact }: { a: ApplicantView; showJob: bool
               <button className="btn-primary" disabled={busy} onClick={() => confirm('Ажил дууссан гэж тэмдэглэх үү? Хоёр талд үнэлгээ өгөх хүсэлт очно.') && act({ action: 'complete' })}>
                 Ажил дууссан
               </button>
+            )}
+            {['invited', 'hired', 'completed'].includes(a.status) && (
+              <Link href={`/chat/${a.id}`} className="btn-ghost">
+                <MessageCircle size={16} /> Чат
+              </Link>
             )}
           </div>
           {a.status === 'completed' && !a.reviewedByMe && (

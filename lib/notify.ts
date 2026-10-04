@@ -16,6 +16,8 @@ export type NotifyType =
   | 'job_rejected'
   | 'job_nearby'
   | 'job_new'
+  | 'message_new'
+  | 'interview_reminder'
   | 'payment_new'
   | 'payment_confirmed'
   | 'payment_rejected'

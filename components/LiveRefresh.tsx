@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const INTERVAL = 8_000;
+const CHAT_INTERVAL = 3_000; // Чат нээлттэй үед илүү хурдан
 
 /**
  * Refresh дарахгүйгээр хуудсыг шинэчилнэ:
@@ -13,8 +14,11 @@ const INTERVAL = 8_000;
  */
 export function LiveRefresh() {
   const router = useRouter();
+  const pathname = usePathname();
   const last = useRef<string | null>(null);
   const busy = useRef(false);
+  const onChat = useRef(false);
+  onChat.current = pathname.startsWith('/chat/');
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -45,7 +49,7 @@ export function LiveRefresh() {
 
     const loop = async () => {
       await check();
-      if (alive) timer = setTimeout(loop, INTERVAL);
+      if (alive) timer = setTimeout(loop, onChat.current ? CHAT_INTERVAL : INTERVAL);
     };
     loop();
 

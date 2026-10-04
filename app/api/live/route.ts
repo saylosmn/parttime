@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { dbConnect } from '@/lib/db';
-import { Application, Job, Notification, Report } from '@/models';
+import { Application, Job, Message, Notification, Payment, Report } from '@/models';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,15 +21,22 @@ export async function GET() {
   parts.push(ts(await Job.findOne({}, 'updatedAt').sort({ updatedAt: -1 }).lean()));
 
   if (me?.id) {
-    const [notif, unread, app] = await Promise.all([
+    const [notif, unread, app, msg] = await Promise.all([
       Notification.findOne({ userId: me.id }, 'createdAt').sort({ createdAt: -1 }).lean(),
       Notification.countDocuments({ userId: me.id, read: false }),
       Application.findOne({ $or: [{ studentId: me.id }, { employerId: me.id }] }, 'updatedAt').sort({ updatedAt: -1 }).lean(),
+      // Чат: шинэ мессеж болон "уншсан" төлөв
+      Message.findOne({ $or: [{ toUserId: me.id }, { fromUserId: me.id }] }, 'createdAt').sort({ createdAt: -1 }).lean(),
     ]);
-    parts.push(ts(notif), unread, ts(app));
+    const unreadSent = await Message.countDocuments({ fromUserId: me.id, read: false });
+    parts.push(ts(notif), unread, ts(app), ts(msg), unreadSent);
     if (me.role === 'admin') {
-      const [pending, reports] = await Promise.all([Job.countDocuments({ status: 'pending' }), Report.countDocuments({ resolved: false })]);
-      parts.push(pending, reports);
+      const [pending, reports, payments] = await Promise.all([
+        Job.countDocuments({ status: 'pending' }),
+        Report.countDocuments({ resolved: false }),
+        Payment.countDocuments({ status: 'pending' }),
+      ]);
+      parts.push(pending, reports, payments);
     }
     return NextResponse.json({ v: parts.join('.'), unread }, { headers: { 'Cache-Control': 'no-store' } });
   }

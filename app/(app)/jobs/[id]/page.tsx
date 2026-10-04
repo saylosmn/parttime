@@ -10,6 +10,7 @@ import { Avatar, Pay, Rating, UrgentBadge, Verified } from '@/components/ui';
 import { ApplySheet } from '@/components/ApplySheet';
 import { ReportButton } from '@/components/ReportButton';
 import { JobMap } from '@/components/JobMap';
+import { SaveButton } from '@/components/SaveButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,7 @@ export default async function JobPage({ params }: { params: { id: string } }) {
   const [hired, applied, student, reviews] = await Promise.all([
     hiredCount(employer._id.toString()),
     me?.role === 'student' ? Application.findOne({ jobId: job._id, studentId: me.id }, 'status').lean() : null,
-    me?.role === 'student' ? User.findById(me.id, 'name school course phone').lean() : null,
+    me?.role === 'student' ? User.findById(me.id, 'name school course phone savedJobs').lean() : null,
     Review.find({ toUserId: employer._id, visible: true, direction: 'student_to_employer' }).sort({ createdAt: -1 }).limit(3).lean(),
   ]);
 
@@ -46,7 +47,15 @@ export default async function JobPage({ params }: { params: { id: string } }) {
         <Link href="/" className="icon-btn" aria-label="Буцах">
           <ChevronLeft size={20} />
         </Link>
-        <ReportButton jobId={job._id.toString()} loggedIn={Boolean(me)} />
+        <div className="flex items-center gap-2">
+          <ReportButton jobId={job._id.toString()} loggedIn={Boolean(me)} />
+          <SaveButton
+            jobId={job._id.toString()}
+            initial={Boolean(student?.savedJobs?.some((id) => id.toString() === job._id.toString()))}
+            canSave={me?.role === 'student'}
+            loggedIn={Boolean(me)}
+          />
+        </div>
       </div>
 
       {job.status !== 'active' && (
@@ -61,7 +70,9 @@ export default async function JobPage({ params }: { params: { id: string } }) {
         <div className="min-w-0">
           <h1 className="h-display text-xl leading-tight">{job.title}</h1>
           <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted">
-            {employerName}
+            <Link href={`/companies/${employer._id}`} className="underline-offset-2 hover:text-text hover:underline">
+              {employerName}
+            </Link>
             {employer.verified && <Verified />}
             <Rating avg={employer.ratingAvg} count={employer.ratingCount} />
           </p>

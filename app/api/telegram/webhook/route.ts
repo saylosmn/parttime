@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { dbConnect } from '@/lib/db';
 import { decidePayment } from '@/lib/payments';
+import { approveJob, rejectJob } from '@/lib/job-admin';
 import { adminChatIds, tgApi, tgEscape } from '@/lib/telegram';
 
 export const dynamic = 'force-dynamic';
@@ -37,28 +38,40 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const m = cq.data.match(/^pay:([cr]):([a-f0-9]{24})$/i);
+  const m = cq.data.match(/^(pay|job):([cra]):([a-f0-9]{24})$/i);
   if (!m) {
     await tgApi('answerCallbackQuery', { callback_query_id: cq.id });
     return NextResponse.json({ ok: true });
   }
 
   await dbConnect();
-  const action = m[1] === 'c' ? 'confirm' : 'reject';
-  const r = await decidePayment(m[2], action, action === 'reject' ? 'Гүйлгээ дансанд ороогүй байна' : undefined);
   const who = tgEscape(cq.from.username ? `@${cq.from.username}` : cq.from.first_name ?? 'админ');
+  let status: string;
+  let toast: string;
 
-  const status = !r.ok
-    ? 'ℹ️ Энэ төлбөр аль хэдийн шийдвэрлэгдсэн эсвэл цуцлагдсан байна.'
-    : r.action === 'confirm'
-      ? `✅ <b>Баталгаажлаа</b> (${who}) — «${tgEscape(r.jobTitle)}» онцлох боллоо.`
-      : `❌ <b>Цуцлагдлаа</b> (${who}) — ажил олгогчид мэдэгдэл очлоо.`;
+  if (m[1] === 'pay') {
+    const action = m[2] === 'c' ? 'confirm' : 'reject';
+    const r = await decidePayment(m[3], action, action === 'reject' ? 'Гүйлгээ дансанд ороогүй байна' : undefined);
+    status = !r.ok
+      ? 'ℹ️ Энэ төлбөр аль хэдийн шийдвэрлэгдсэн эсвэл цуцлагдсан байна.'
+      : r.action === 'confirm'
+        ? `✅ <b>Баталгаажлаа</b> (${who}) — «${tgEscape(r.jobTitle)}» онцлох боллоо.`
+        : `❌ <b>Цуцлагдлаа</b> (${who}) — ажил олгогчид мэдэгдэл очлоо.`;
+    toast = !r.ok ? 'Аль хэдийн шийдвэрлэгдсэн' : r.action === 'confirm' ? 'Баталгаажлаа' : 'Цуцлагдлаа';
+  } else {
+    // Шинэ зар: Зөвшөөрөх / Татгалзах
+    const approve = m[2] === 'a';
+    const job = approve ? await approveJob(m[3]) : await rejectJob(m[3], 'Зарын агуулга журамд нийцээгүй. Тодорхой, үнэн мэдээлэлтэй болгож засна уу');
+    status = !job
+      ? 'ℹ️ Энэ зар аль хэдийн шийдвэрлэгдсэн байна.'
+      : approve
+        ? `✅ <b>Нийтлэгдлээ</b> (${who}) — оюутнуудад мэдэгдэл очлоо.`
+        : `❌ <b>Татгалзлаа</b> (${who}) — ажил олгогчид засах мэдэгдэл очлоо.`;
+    toast = !job ? 'Аль хэдийн шийдвэрлэгдсэн' : approve ? 'Нийтлэгдлээ' : 'Татгалзлаа';
+  }
 
   await Promise.all([
-    tgApi('answerCallbackQuery', {
-      callback_query_id: cq.id,
-      text: !r.ok ? 'Аль хэдийн шийдвэрлэгдсэн' : r.action === 'confirm' ? 'Баталгаажлаа' : 'Цуцлагдлаа',
-    }),
+    tgApi('answerCallbackQuery', { callback_query_id: cq.id, text: toast }),
     // Товчнуудыг арилгаж, мессеж дээр үр дүнг бичнэ (давхар дарахаас сэргийлнэ)
     tgApi('editMessageText', {
       chat_id: cq.message.chat.id,

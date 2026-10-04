@@ -39,6 +39,7 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       app.status = 'invited';
       app.interviewAt = input.interviewAt;
       app.interviewResponse = null;
+      app.reminderSent = false; // Шинэ цагт дахин сануулна
       app.rescheduleNote = undefined;
       await app.save();
       await notify(app.studentId, {

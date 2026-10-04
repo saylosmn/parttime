@@ -90,3 +90,37 @@ body {
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Газрын зургийн үнийн тэмдэг */
+.tsag-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: 700 12px var(--font-sans), sans-serif;
+  border: 2px solid var(--bg);
+  white-space: nowrap;
+}
+.tsag-pin.urgent {
+  background: var(--urgent);
+}
+.leaflet-container.leaflet-container {
+  background: var(--sunken);
+  font-family: var(--font-sans), sans-serif;
+}
+/* OSM хавтанг сайтын хар загварт тохируулна */
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);
+}
+/* Tailwind preflight-ийн img { max-width:100%; height:auto } нь Leaflet-ийн хавтанг эвддэг */
+.leaflet-container img.leaflet-tile,
+.leaflet-container .leaflet-marker-icon,
+.leaflet-container .leaflet-marker-shadow {
+  max-width: none !important;
+  max-height: none !important;
+}

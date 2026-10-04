@@ -69,6 +69,18 @@ async function main() {
     { employerId: event._id, title: 'Гэрэл зурагчны туслах', payAmount: 30000, payUnit: 'task', district: 'Хан-Уул', schedule: 'Бямба 14:00–20:00', tags: ['weekend'], requirements: ['Өөрийн камертай бол давуу тал'], description: 'Хуримын зураг авалтад гэрэл барих, тоног төхөөрөмж зөөх.', status: 'pending', expiresAt: exp() },
   ]);
 
+  // Газрын зурагт харагдах туршилтын координатууд (УБ)
+  const coords: Record<string, [number, number]> = {
+    'Бармены туслах': [47.9187, 106.9177],
+    'Эвентийн туслах ажилтан': [47.8864, 106.9057],
+    'Кассчин': [47.9168, 106.9537],
+    'Хүргэлтийн ажилтан': [47.9212, 106.9196],
+    'Туслах багш (англи хэл)': [47.9235, 106.9066],
+    'Бараа байршуулагч': [47.9122, 106.9688],
+    'Промоутер': [47.9137, 106.8742],
+  };
+  await Promise.all(jobs.filter((j) => coords[j.title]).map((j) => Job.updateOne({ _id: j._id }, { location: { lat: coords[j.title][0], lng: coords[j.title][1] } })));
+
   const [barista, eventJob, cashier] = jobs;
   const [bat, nominS, temuulen, oyun] = students;
   await Application.insertMany([

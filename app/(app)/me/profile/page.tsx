@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Types } from 'mongoose';
 import { pageUser } from '@/lib/guards';
 import { Application, Review, User } from '@/models';
@@ -72,6 +73,10 @@ export default async function ProfilePage() {
         )}
 
         <div className="card divide-y divide-line text-[15px]">
+          <Link href="/me/saved" className="flex min-h-[52px] items-center justify-between gap-4 px-4 hover:bg-surface-2">
+            <span>Хадгалсан зарууд</span>
+            <span className="text-sm text-muted">{user.savedJobs?.length ?? 0} ›</span>
+          </Link>
           <Row k="Чөлөөт цаг" v={(user.availability ?? []).map((a) => AVAILABILITY[a as Availability]).join(', ') || '—'} />
           <Row k="Утас" v={user.phone ? `+976 ${user.phone}` : '—'} />
           <div className="flex min-h-[52px] items-center justify-between px-4">

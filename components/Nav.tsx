@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { Bell, Briefcase, FileText, Home, LayoutGrid, Plus, Shield, User, CreditCard } from 'lucide-react';
+import { Bell, Briefcase, FileText, Home, LayoutGrid, MapPin, Plus, Shield, User, CreditCard } from 'lucide-react';
 
 /** Уншаагүй мэдэгдлийн тоо: хуудас нээгдэх үед болон 30 секунд тутам шалгана. */
 export function useUnreadCount() {
@@ -72,6 +72,7 @@ function itemsFor(role: string | null | undefined): Item[] {
   }
   return [
     { href: '/', label: 'Нүүр', icon: Home, match: (p) => p === '/' || p.startsWith('/jobs') },
+    { href: '/map', label: 'Газрын зураг', icon: MapPin },
     { href: '/me/applications', label: 'Өргөдөл', icon: FileText },
     { href: '/notifications', label: 'Мэдэгдэл', icon: Bell, badge: true },
     { href: '/me/profile', label: 'Профайл', icon: User },
@@ -84,6 +85,7 @@ export function BottomNav({ className, role, loggedIn }: { className?: string; r
   const count = useUnreadCount();
   const items: Item[] = loggedIn ? itemsFor(role) : [
     { href: '/', label: 'Нүүр', icon: Home, match: (p: string) => p === '/' || p.startsWith('/jobs') },
+    { href: '/map', label: 'Газрын зураг', icon: MapPin },
     { href: '/login', label: 'Нэвтрэх', icon: User },
   ];
   return (

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/db';
-import { Application, Job, Notification, Review } from '@/models';
+import { Application, Job, Notification, Review, User } from '@/models';
 import { notify } from '@/lib/notify';
 import { revealReviews } from '@/lib/services';
-import { LIMITS } from '@/lib/config';
+import { LIMITS, formatDateTime } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -48,10 +48,42 @@ export async function GET(req: Request) {
   // 5. 90 хоногоос хуучин уншсан мэдэгдлийг цэвэрлэх
   const cleaned = await Notification.deleteMany({ read: true, createdAt: { $lte: new Date(now.getTime() - 90 * DAY) } });
 
+  // 6. Ярилцлагын сануулга: cron өдөрт нэг удаа (УБ 09:00) ажилладаг тул ойрын 36 цагийн ярилцлагуудыг сануулна
+  const upcoming = await Application.find({
+    status: 'invited',
+    reminderSent: { $ne: true },
+    interviewAt: { $gt: now, $lte: new Date(now.getTime() + 36 * 3600_000) },
+  }).lean();
+  const ubDay = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(d);
+  for (const a of upcoming) {
+    const job = await Job.findById(a.jobId, 'title address district').lean();
+    const [student, employer] = await Promise.all([
+      User.findById(a.studentId, 'name').lean(),
+      User.findById(a.employerId, 'name companyName').lean(),
+    ]);
+    const when = ubDay(a.interviewAt!) === ubDay(now) ? 'Өнөөдөр' : 'Маргааш';
+    const at = formatDateTime(a.interviewAt!);
+    const place = [job?.address, job?.district].filter(Boolean).join(', ');
+    await notify(a.studentId, {
+      type: 'interview_reminder',
+      title: `${when} ярилцлагатай: «${job?.title ?? ''}»`,
+      body: `${employer?.companyName || employer?.name || 'Ажил олгогч'} · ${at}${place ? ` · ${place}` : ''}. Цагтаа очоорой, саатвал чатаар мэдэгдээрэй.`,
+      link: `/chat/${a._id}`,
+    });
+    await notify(a.employerId, {
+      type: 'interview_reminder',
+      title: `${when} ярилцлагатай: ${student?.name ?? 'оюутан'}`,
+      body: `«${job?.title ?? ''}» · ${at}${a.interviewResponse === 'accepted' ? ' · Оюутан зөвшөөрсөн' : ' · Оюутан хараахан хариулаагүй'}.`,
+      link: `/employer/jobs/${a.jobId}`,
+    });
+    await Application.updateOne({ _id: a._id }, { reminderSent: true });
+  }
+
   return NextResponse.json({
     closed: closed.modifiedCount,
     warned: expiring.length,
     revealed: staleCompleted.length,
     cleaned: cleaned.deletedCount,
+    reminded: upcoming.length,
   });
 }

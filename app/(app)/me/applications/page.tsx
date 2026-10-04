@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import clsx from 'clsx';
-import { CalendarDays, FileText } from 'lucide-react';
+import { CalendarDays, FileText, MessageCircle } from 'lucide-react';
 import { pageUser } from '@/lib/guards';
 import { Application, Review } from '@/models';
 import { formatDateTime, timeAgo, type AppStatus } from '@/lib/config';
@@ -108,6 +108,12 @@ export default async function MyApplications({ searchParams }: { searchParams: {
                       </Link>
                     )}
                   </div>
+                )}
+
+                {['invited', 'hired', 'completed'].includes(a.status) && (
+                  <Link href={`/chat/${a._id}`} className="btn-ghost mt-3 w-full">
+                    <MessageCircle size={16} /> Ажил олгогчтой чатлах
+                  </Link>
                 )}
 
                 {a.status === 'completed' && !reviewed.has(a._id.toString()) && (

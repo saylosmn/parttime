@@ -43,6 +43,16 @@ export default async function AdminPending() {
                 )}
                 {j.isUrgent && <span className="badge ml-2 bg-urgent text-accent-ink">Яаралтай</span>}
               </p>
+              {j.flagged && j.flagReasons?.length > 0 && (
+                <div className="rounded-btn border border-urgent/40 bg-[#2a1f08] p-3 text-sm">
+                  <p className="font-semibold text-urgent">⚠️ Сэжигтэй зар байж болзошгүй</p>
+                  <ul className="mt-1 list-disc pl-5 text-soft">
+                    {j.flagReasons.map((r: string) => (
+                      <li key={r}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <p className="line-clamp-4 whitespace-pre-line text-sm text-muted">{j.description}</p>
               {(j.requirements.length > 0 || j.tags.length > 0) && (
                 <p className="text-xs text-muted">

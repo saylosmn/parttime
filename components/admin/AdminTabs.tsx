@@ -12,6 +12,7 @@ export function AdminTabs({ pending, reports, payments }: { pending: number; rep
     { href: '/admin/jobs', label: 'Бүх зар', n: 0 },
     { href: '/admin/users', label: 'Хэрэглэгчид', n: 0 },
     { href: '/admin/reports', label: 'Гомдол', n: reports },
+    { href: '/admin/stats', label: 'Статистик', n: 0 },
   ];
   return (
     <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">

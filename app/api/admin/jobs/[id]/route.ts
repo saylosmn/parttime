@@ -1,8 +1,8 @@
 import { handle, ok, requireUser, HttpError } from '@/lib/guards';
 import { adminJobSchema } from '@/lib/validators';
 import { Job, type JobT } from '@/models';
-import { notify } from '@/lib/notify';
 import { broadcastJob } from '@/lib/services';
+import { approveJob, rejectJob } from '@/lib/job-admin';
 
 type Ctx = { params: { id: string } };
 
@@ -17,27 +17,11 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
 
   switch (input.action) {
     case 'approve':
-      job.status = 'active';
-      job.rejectReason = undefined;
-      await job.save();
-      await notify(job.employerId, {
-        type: 'job_approved',
-        title: `Таны «${job.title}» зар нийтлэгдлээ`,
-        body: 'Админ шалгаж зөвшөөрлөө. Зар одоо бүх оюутанд харагдаж, тэдэнд мэдэгдэл очлоо. Өргөдөл ирэхэд танд мэдэгдэнэ.',
-        link: `/jobs/${job._id}`,
-      });
-      break;
+      if (!(await approveJob(params.id))) throw new HttpError(409, 'Зар аль хэдийн шийдвэрлэгдсэн байна');
+      return ok();
     case 'reject':
-      job.status = 'rejected';
-      job.rejectReason = input.reason;
-      await job.save();
-      await notify(job.employerId, {
-        type: 'job_rejected',
-        title: `Таны «${job.title}» зар нийтлэгдсэнгүй`,
-        body: `Шалтгаан: ${input.reason}. Зараа засаад дахин илгээх боломжтой.`,
-        link: `/employer/jobs/${job._id}/edit`,
-      });
-      break;
+      if (!(await rejectJob(params.id, input.reason))) throw new HttpError(409, 'Зар аль хэдийн шийдвэрлэгдсэн байна');
+      return ok();
     case 'feature':
       // Одоохондоо төлбөрийг дансаар хүлээн авч админ гараар идэвхжүүлнэ (дараа нь QPay webhook).
       job.isFeatured = true;
@@ -54,8 +38,6 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       await job.save();
       break;
   }
-  if (input.action === 'approve' || input.action === 'feature') {
-    await broadcastJob(job.toObject() as JobT);
-  }
+  if (input.action === 'feature') await broadcastJob(job.toObject() as JobT);
   return ok();
 });

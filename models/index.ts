@@ -21,6 +21,7 @@ const UserSchema = new Schema(
     bio: String,
     // Шинэ зарын мэдэгдэл: бүгд / зөвхөн өөрийн дүүрэг / унтраах
     jobAlerts: { type: String, enum: ['all', 'district', 'off'], default: 'all' },
+    savedJobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }], // Оюутны хадгалсан зарууд
     companyName: String,
     companyDistrict: String,
     verified: { type: Boolean, default: false },
@@ -57,6 +58,9 @@ const JobSchema = new Schema(
     broadcastDone: { type: Boolean, default: false },
     expiryWarned: { type: Boolean, default: false },
     expiresAt: { type: Date, required: true },
+    // Автомат шүүлтүүр сэжигтэй гэж тэмдэглэсэн бол (админд анхааруулга)
+    flagged: { type: Boolean, default: false },
+    flagReasons: { type: [String], default: [] },
   },
   { timestamps: true },
 );
@@ -83,6 +87,8 @@ const ApplicationSchema = new Schema(
     interviewResponse: { type: String, enum: ['accepted', 'reschedule', null], default: null },
     rescheduleNote: String,
     completedAt: Date,
+    reminderSent: { type: Boolean, default: false }, // Ярилцлагын сануулга илгээсэн эсэх
+    lastMessageAt: Date,
   },
   { timestamps: true },
 );
@@ -173,3 +179,18 @@ PaymentSchema.index({ jobId: 1, open: 1 });
 // Нээлттэй төлбөрүүдийн дунд гүйлгээний утга давхардахгүй
 PaymentSchema.index({ code: 1 }, { unique: true, partialFilterExpression: { open: true }, name: 'code_open_unique' });
 export const Payment = mk('Payment', PaymentSchema);
+
+/* ---------- Message (өргөдөл дээрх чат: урьсны дараа нээгдэнэ) ---------- */
+const MessageSchema = new Schema(
+  {
+    applicationId: { type: Schema.Types.ObjectId, ref: 'Application', required: true },
+    fromUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    toUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    text: { type: String, required: true, maxlength: 1000 },
+    read: { type: Boolean, default: false },
+  },
+  { timestamps: { createdAt: true, updatedAt: false } },
+);
+MessageSchema.index({ applicationId: 1, createdAt: 1 });
+MessageSchema.index({ toUserId: 1, read: 1 });
+export const Message = mk('Message', MessageSchema);

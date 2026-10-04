@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import clsx from 'clsx';
-import { Bell, Briefcase, CalendarDays, Check, ChevronLeft, FileText, MapPin, Star, X, AlertTriangle, Megaphone } from 'lucide-react';
+import { Bell, Briefcase, CalendarDays, MessageCircle, Check, ChevronLeft, FileText, MapPin, Star, X, AlertTriangle, Megaphone } from 'lucide-react';
 import { pageUser } from '@/lib/guards';
 import { Application, Notification, Review } from '@/models';
 import { timeAgo } from '@/lib/config';
@@ -20,6 +20,8 @@ const ICONS: Record<string, React.ElementType> = {
   application_hired: Check,
   job_nearby: MapPin,
   job_new: Briefcase,
+  message_new: MessageCircle,
+  interview_reminder: CalendarDays,
   review_request: Star,
   job_expiring: AlertTriangle,
   low_rating: AlertTriangle,
