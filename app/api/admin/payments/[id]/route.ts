@@ -3,7 +3,7 @@ import { handle, ok, requireUser, HttpError } from '@/lib/guards';
 import { decidePayment } from '@/lib/payments';
 import { sendTelegram, tgEscape } from '@/lib/telegram';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 export const maxDuration = 60;
 
 const schema = z.discriminatedUnion('action', [
@@ -12,7 +12,8 @@ const schema = z.discriminatedUnion('action', [
 ]);
 
 /** Админ сайтаас баталгаажуулах/татгалзах (Telegram товчтой ижил логик). */
-export const PATCH = handle(async (req: Request, { params }: Ctx) => {
+export const PATCH = handle(async (req: Request, ctx: Ctx) => {
+  const params = await ctx.params;
   await requireUser(['admin']);
   const input = schema.parse(await req.json());
   const r = await decidePayment(params.id, input.action, input.action === 'reject' ? input.note : undefined);

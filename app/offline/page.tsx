@@ -10,6 +10,8 @@ export default function Offline() {
       </span>
       <h1 className="h-display text-xl">Интернэт холболтгүй байна</h1>
       <p className="text-sm text-muted">Холболтоо шалгаад дахин оролдоно уу.</p>
+      {/* Сүлжээгүй үед client navigation биш, бүтэн дахин ачаалал хэрэгтэй */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a href="/" className="btn-primary">
         Дахин ачаалах
       </a>

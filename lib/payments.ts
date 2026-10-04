@@ -16,7 +16,7 @@ export async function decidePayment(id: string, action: 'confirm' | 'reject', no
   const payment = await Payment.findOneAndUpdate(
     { _id: id, status: 'pending' },
     action === 'confirm' ? { status: 'confirmed', open: false } : { status: 'rejected', open: false, note },
-    { new: true },
+    { returnDocument: 'after' },
   );
   if (!payment) return { ok: false, reason: 'not_found' };
   const job = await Job.findById(payment.jobId);

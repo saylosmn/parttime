@@ -15,7 +15,8 @@ export const dynamic = 'force-dynamic';
 
 type SP = { q?: string; tag?: string; district?: string; minPay?: string; near?: string };
 
-export default async function HomePage({ searchParams }: { searchParams: SP }) {
+export default async function HomePage(props: { searchParams: Promise<SP> }) {
+  const searchParams = await props.searchParams;
   const session = await auth();
   await dbConnect();
 

@@ -14,7 +14,8 @@ export const dynamic = 'force-dynamic';
 const STEPS: AppStatus[] = ['sent', 'viewed', 'invited', 'hired'];
 const STEP_LABEL = ['Илгээсэн', 'Үзсэн', 'Урьсан', 'Ажилд орсон'];
 
-export default async function MyApplications({ searchParams }: { searchParams: { tab?: string } }) {
+export default async function MyApplications(props: { searchParams: Promise<{ tab?: string }> }) {
+  const searchParams = await props.searchParams;
   const me = await pageUser(['student']);
   const tab = searchParams.tab === 'done' ? 'done' : 'active';
   const all = await Application.find({ studentId: me.id })

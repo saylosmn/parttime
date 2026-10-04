@@ -5,7 +5,7 @@ import { mapFields } from '@/lib/job-location';
 import { moderateJob } from '@/lib/moderation';
 import { notifyJobPending } from '@/lib/job-admin';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 async function ownJob(id: string, userId: string, role: string | null) {
   const job = await Job.findById(id);
@@ -15,7 +15,8 @@ async function ownJob(id: string, userId: string, role: string | null) {
 }
 
 // Засвар хийхэд дахин админ шалгалтад орно.
-export const PATCH = handle(async (req: Request, { params }: Ctx) => {
+export const PATCH = handle(async (req: Request, ctx: Ctx) => {
+  const params = await ctx.params;
   const me = await requireUser(['employer']);
   const job = await ownJob(params.id, me.id, me.role);
   const data = jobSchema.parse(await req.json());
@@ -28,7 +29,8 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
 });
 
 // Ажил олгогч зараа хаах
-export const DELETE = handle(async (_req: Request, { params }: Ctx) => {
+export const DELETE = handle(async (_req: Request, ctx: Ctx) => {
+  const params = await ctx.params;
   const me = await requireUser(['employer']);
   const job = await ownJob(params.id, me.id, me.role);
   job.status = 'closed';

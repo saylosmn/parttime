@@ -6,7 +6,7 @@ import { tgEscape } from './telegram';
 
 /** Зар зөвшөөрөх — админ хуудас болон Telegram товч хоёулаа ашиглана. pending-ээс л шилжүүлнэ. */
 export async function approveJob(id: string) {
-  const job = await Job.findOneAndUpdate({ _id: id, status: 'pending' }, { status: 'active', $unset: { rejectReason: 1 } }, { new: true });
+  const job = await Job.findOneAndUpdate({ _id: id, status: 'pending' }, { status: 'active', $unset: { rejectReason: 1 } }, { returnDocument: 'after' });
   if (!job) return null;
   await notify(job.employerId, {
     type: 'job_approved',
@@ -19,7 +19,7 @@ export async function approveJob(id: string) {
 }
 
 export async function rejectJob(id: string, reason: string) {
-  const job = await Job.findOneAndUpdate({ _id: id, status: 'pending' }, { status: 'rejected', rejectReason: reason }, { new: true });
+  const job = await Job.findOneAndUpdate({ _id: id, status: 'pending' }, { status: 'rejected', rejectReason: reason }, { returnDocument: 'after' });
   if (!job) return null;
   await notify(job.employerId, {
     type: 'job_rejected',

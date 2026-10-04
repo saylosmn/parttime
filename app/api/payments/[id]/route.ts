@@ -5,7 +5,7 @@ import { formatDateTime } from '@/lib/config';
 import { notifyAdmins } from '@/lib/notify';
 import { sendTelegram, tgEscape } from '@/lib/telegram';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 const schema = z.object({ action: z.enum(['paid', 'cancel']) });
 
 /**
@@ -13,7 +13,8 @@ const schema = z.object({ action: z.enum(['paid', 'cancel']) });
  *  - paid:   "Төлбөр шилжүүлсэн" → админд + Telegram руу мэдэгдэнэ
  *  - cancel: гүйлгээ цуцлах (админ баталгаажуулахаас өмнө)
  */
-export const PATCH = handle(async (req: Request, { params }: Ctx) => {
+export const PATCH = handle(async (req: Request, ctx: Ctx) => {
+  const params = await ctx.params;
   const me = await requireUser(['employer']);
   const { action } = schema.parse(await req.json());
 
@@ -21,7 +22,7 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
     const p = await Payment.findOneAndUpdate(
       { _id: params.id, employerId: me.id, open: true },
       { status: 'cancelled', open: false },
-      { new: true },
+      { returnDocument: 'after' },
     );
     if (!p) throw new HttpError(409, 'Цуцлах боломжгүй: төлбөр аль хэдийн шийдвэрлэгдсэн байна');
     if (p.paidAt) {
@@ -33,7 +34,7 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
   const p = await Payment.findOneAndUpdate(
     { _id: params.id, employerId: me.id, status: 'awaiting' },
     { status: 'pending', paidAt: new Date() },
-    { new: true },
+    { returnDocument: 'after' },
   );
   if (!p) throw new HttpError(409, 'Энэ төлбөрийг аль хэдийн мэдэгдсэн эсвэл цуцалсан байна');
 

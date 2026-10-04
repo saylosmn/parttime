@@ -18,7 +18,8 @@ const TABS: { key: string; label: string; statuses: AppStatus[] }[] = [
   { key: 'rejected', label: 'Татгалзсан', statuses: ['rejected'] },
 ];
 
-export default async function EmployerApplications({ searchParams }: { searchParams: { tab?: string } }) {
+export default async function EmployerApplications(props: { searchParams: Promise<{ tab?: string }> }) {
+  const searchParams = await props.searchParams;
   const me = await pageUser(['employer']);
   const tab = TABS.find((t) => t.key === searchParams.tab) ?? TABS[0];
   if (tab.key === 'new') await markViewed(me.id);

@@ -14,13 +14,15 @@ import { SaveButton } from '@/components/SaveButton';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await dbConnect();
   const job = await getJob(params.id);
   return { title: job?.title ?? 'Зар' };
 }
 
-export default async function JobPage({ params }: { params: { id: string } }) {
+export default async function JobPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await dbConnect();
   const job = await getJob(params.id);
   if (!job) notFound();

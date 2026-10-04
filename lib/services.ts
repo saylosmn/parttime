@@ -12,7 +12,7 @@ export async function recomputeRating(userId: Types.ObjectId | string) {
   ]);
   const avg = agg ? Math.round(agg.avg * 10) / 10 : 0;
   const count = agg?.count ?? 0;
-  const user = await User.findByIdAndUpdate(uid, { ratingAvg: avg, ratingCount: count }, { new: true });
+  const user = await User.findByIdAndUpdate(uid, { ratingAvg: avg, ratingCount: count }, { returnDocument: 'after' });
   if (user?.role === 'employer' && count >= LIMITS.minRatingsForAvg && avg < LIMITS.lowRatingThreshold) {
     await notifyAdmins({
       type: 'low_rating',

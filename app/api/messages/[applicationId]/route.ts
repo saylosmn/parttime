@@ -4,10 +4,11 @@ import { Application, Job, Message, User } from '@/models';
 import { chatAccess } from '@/lib/chat';
 import { notify } from '@/lib/notify';
 
-type Ctx = { params: { applicationId: string } };
+type Ctx = { params: Promise<{ applicationId: string }> };
 const schema = z.object({ text: z.string().trim().min(1, 'Мессеж хоосон байна').max(1000, '1000 тэмдэгтээс хэтрэхгүй') });
 
-export const POST = handle(async (req: Request, { params }: Ctx) => {
+export const POST = handle(async (req: Request, ctx: Ctx) => {
+  const params = await ctx.params;
   const me = await requireUser(['student', 'employer']);
   const access = await chatAccess(params.applicationId, me.id);
   if (!access) throw new HttpError(404, 'Чат олдсонгүй');
@@ -35,7 +36,8 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
 });
 
 /** Уншсан болгох. */
-export const PATCH = handle(async (_req: Request, { params }: Ctx) => {
+export const PATCH = handle(async (_req: Request, ctx: Ctx) => {
+  const params = await ctx.params;
   const me = await requireUser(['student', 'employer']);
   const access = await chatAccess(params.applicationId, me.id);
   if (!access) throw new HttpError(404, 'Чат олдсонгүй');

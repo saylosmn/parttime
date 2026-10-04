@@ -14,14 +14,16 @@ import { CloseJobButton } from '@/components/employer/CloseJobButton';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!Types.ObjectId.isValid(params.id)) return { title: 'Зар' };
   await dbConnect();
   const job = await Job.findById(params.id, 'title').lean();
   return { title: job ? `${job.title} · Өргөдлүүд` : 'Зар' };
 }
 
-export default async function EmployerJobPage({ params }: { params: { id: string } }) {
+export default async function EmployerJobPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const me = await pageUser(['employer']);
   if (!Types.ObjectId.isValid(params.id)) notFound();
   const job = await Job.findById(params.id).lean();

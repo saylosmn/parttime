@@ -4,12 +4,13 @@ import { Job, type JobT } from '@/models';
 import { broadcastJob } from '@/lib/services';
 import { approveJob, rejectJob } from '@/lib/job-admin';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 // Зар зөвшөөрөхөд бүх оюутанд мэдэгдэл илгээдэг тул хугацааг сунгана
 export const maxDuration = 60;
 
-export const PATCH = handle(async (req: Request, { params }: Ctx) => {
+export const PATCH = handle(async (req: Request, ctx: Ctx) => {
+  const params = await ctx.params;
   await requireUser(['admin']);
   const input = adminJobSchema.parse(await req.json());
   const job = await Job.findById(params.id);

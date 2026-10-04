@@ -14,6 +14,8 @@ export default async function EmployerJobs() {
   const me = await pageUser(['employer']);
   const jobs = await Job.find({ employerId: me.id }).sort({ createdAt: -1 }).lean();
   const counts = await applicationCounts(jobs.map((j) => j._id));
+  // Server component: хүсэлт бүрт нэг удаа ажилладаг тул цаг авах нь зөв
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
 
   return (

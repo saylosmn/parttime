@@ -16,7 +16,8 @@ const STATUS = {
 } as const;
 
 // Онлайн төлбөр (QPay) одоохондоо байхгүй: дансаар шилжүүлж, админ Telegram-аар мэдээлэл аваад баталгаажуулна.
-export default async function BillingPage({ searchParams }: { searchParams: { job?: string } }) {
+export default async function BillingPage(props: { searchParams: Promise<{ job?: string }> }) {
+  const searchParams = await props.searchParams;
   const me = await pageUser(['employer']);
   const jobs = await Job.find({ employerId: me.id, status: 'active' }, 'title isFeatured featuredUntil').sort({ createdAt: -1 }).lean();
   const payJobs: PayJob[] = jobs.map((j) => ({

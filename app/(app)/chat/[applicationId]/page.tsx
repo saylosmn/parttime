@@ -10,7 +10,8 @@ import { ChatView } from '@/components/ChatView';
 export const metadata = { title: 'Чат' };
 export const dynamic = 'force-dynamic';
 
-export default async function ChatPage({ params }: { params: { applicationId: string } }) {
+export default async function ChatPage(props: { params: Promise<{ applicationId: string }> }) {
+  const params = await props.params;
   const me = await pageUser(['student', 'employer']);
   const access = await chatAccess(params.applicationId, me.id);
   if (!access) notFound();

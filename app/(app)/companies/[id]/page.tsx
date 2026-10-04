@@ -11,7 +11,8 @@ import { JobRow } from '@/components/JobCard';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!Types.ObjectId.isValid(params.id)) return { title: 'Ажил олгогч' };
   await dbConnect();
   const u = await User.findById(params.id, 'companyName name').lean();
@@ -19,7 +20,8 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 /** Ажил олгогчийн нийтийн профайл: идэвхтэй зарууд, үнэлгээ, оюутнуудын сэтгэгдэл. */
-export default async function CompanyPage({ params }: { params: { id: string } }) {
+export default async function CompanyPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!Types.ObjectId.isValid(params.id)) notFound();
   await dbConnect();
   const company = await User.findOne({ _id: params.id, role: 'employer', banned: { $ne: true } }).lean();

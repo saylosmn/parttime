@@ -12,7 +12,8 @@ export const dynamic = 'force-dynamic';
 const FILTERS = ['active', 'pending', 'rejected', 'closed'] as const;
 const LABEL = { active: 'Идэвхтэй', pending: 'Хүлээгдэж буй', rejected: 'Татгалзсан', closed: 'Хаагдсан' };
 
-export default async function AdminJobs({ searchParams }: { searchParams: { status?: string } }) {
+export default async function AdminJobs(props: { searchParams: Promise<{ status?: string }> }) {
+  const searchParams = await props.searchParams;
   await pageUser(['admin']);
   const status = (FILTERS as readonly string[]).includes(searchParams.status ?? '') ? (searchParams.status as (typeof FILTERS)[number]) : 'active';
   const jobs = await Job.find({ status }).sort({ createdAt: -1 }).limit(100).populate('employerId', 'name companyName').lean();

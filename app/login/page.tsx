@@ -13,7 +13,8 @@ const SAMPLES = [
   { i: 'СТ', t: 'Туслах багш', s: 'ЧД · Орой', p: '15,000₮', r: '-rotate-1 translate-x-4' },
 ];
 
-export default async function LoginPage({ searchParams }: { searchParams: { callbackUrl?: string } }) {
+export default async function LoginPage(props: { searchParams: Promise<{ callbackUrl?: string }> }) {
+  const searchParams = await props.searchParams;
   const session = await auth();
   const callbackUrl = searchParams.callbackUrl?.startsWith('/') ? searchParams.callbackUrl : '/';
   if (session?.user) redirect(session.user.onboarded ? callbackUrl : '/onboarding');

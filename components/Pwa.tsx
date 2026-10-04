@@ -1,9 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { Bell, Download, Share, SquarePlus, Smartphone, X } from 'lucide-react';
 
 type BIPEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+
+// Өөрчлөгдөхгүй browser-ийн утгыг useSyncExternalStore-оор унших үед
+const noopSubscribe = () => () => {};
 
 const ASK_KEY = 'tsag:askPush';
 const DISMISS_KEY = 'tsag:pushDismissed';
@@ -109,17 +112,24 @@ export function IOSInstallSteps() {
  * зөвхөн анхны өргөдөл/зар илгээсний дараа эсвэл `force` үед харагдана.
  */
 export function PushPrompt({ force = false }: { force?: boolean }) {
-  const [mode, setMode] = useState<'hidden' | 'ask' | 'ios'>('hidden');
+  const [closed, setClosed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
 
-  useEffect(() => {
-    const wanted = force || store(ASK_KEY) === '1';
-    if (!wanted || store(DISMISS_KEY) === '1') return;
-    if (isIOS() && !isStandalone()) return setMode('ios');
-    if (!pushSupported() || Notification.permission !== 'default') return;
-    setMode('ask');
-  }, [force]);
+  // localStorage / Notification зэрэг browser-ийн утгаас хамаарна → server дээр 'hidden'
+  const initial = useSyncExternalStore<'hidden' | 'ask' | 'ios'>(
+    noopSubscribe,
+    () => {
+      const wanted = force || store(ASK_KEY) === '1';
+      if (!wanted || store(DISMISS_KEY) === '1') return 'hidden';
+      if (isIOS() && !isStandalone()) return 'ios';
+      if (!pushSupported() || Notification.permission !== 'default') return 'hidden';
+      return 'ask';
+    },
+    () => 'hidden',
+  );
+  const mode = closed ? 'hidden' : initial;
+  const setMode = (m: 'hidden') => m === 'hidden' && setClosed(true);
 
   const close = () => {
     store(DISMISS_KEY, '1');
@@ -203,11 +213,10 @@ export function InstallBanner() {
 
 export function useInstall() {
   const [evt, setEvt] = useState<BIPEvent | null>(null);
-  const [ios, setIos] = useState(false);
-  const [standalone, setStandalone] = useState(true);
+  // Browser-ийн утгыг hydration-д аюулгүйгээр уншина (server дээр: iOS биш, суулгасан гэж үзнэ)
+  const ios = useSyncExternalStore(noopSubscribe, isIOS, () => false);
+  const standalone = useSyncExternalStore(noopSubscribe, isStandalone, () => true);
   useEffect(() => {
-    setIos(isIOS());
-    setStandalone(isStandalone());
     const h = (e: Event) => {
       e.preventDefault();
       setEvt(e as BIPEvent);

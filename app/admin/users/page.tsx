@@ -12,7 +12,8 @@ function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export default async function AdminUsers({ searchParams }: { searchParams: { role?: string; q?: string } }) {
+export default async function AdminUsers(props: { searchParams: Promise<{ role?: string; q?: string }> }) {
+  const searchParams = await props.searchParams;
   await pageUser(['admin']);
   const role = searchParams.role === 'student' ? 'student' : 'employer';
   const q: Record<string, unknown> = { role };

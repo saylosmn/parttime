@@ -4,11 +4,12 @@ import { Application, Job, User } from '@/models';
 import { notify } from '@/lib/notify';
 import { formatDateTime } from '@/lib/config';
 
-type Ctx = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
 const EMPLOYER_ACTIONS = ['invite', 'reject', 'hire', 'complete'] as const;
 
-export const PATCH = handle(async (req: Request, { params }: Ctx) => {
+export const PATCH = handle(async (req: Request, ctx: Ctx) => {
+  const params = await ctx.params;
   const me = await requireUser(['student', 'employer']);
   const input = applicationActionSchema.parse(await req.json());
   const app = await Application.findById(params.id);

@@ -8,7 +8,8 @@ import type { JobTag, PayUnit } from '@/lib/config';
 export const metadata = { title: 'Зар засах' };
 export const dynamic = 'force-dynamic';
 
-export default async function EditJobPage({ params }: { params: { id: string } }) {
+export default async function EditJobPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const me = await pageUser(['employer']);
   if (!Types.ObjectId.isValid(params.id)) notFound();
   const job = await Job.findById(params.id).lean();

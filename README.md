@@ -1,6 +1,6 @@
 # Цаг — оюутны part-time ажлын платформ
 
-Оюутнуудыг part-time ажил олгогчтой холбодог mobile-first PWA. Next.js 14 (App Router) + MongoDB + Auth.js + Web Push. Нэг репо, Vercel дээр frontend + backend хамт ажиллана.
+Оюутнуудыг part-time ажил олгогчтой холбодог mobile-first PWA. Next.js 16 (App Router) + MongoDB + Auth.js + Web Push. Нэг репо, Vercel дээр frontend + backend хамт ажиллана.
 
 ## Бүтэц
 

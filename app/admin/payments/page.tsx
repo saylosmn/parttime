@@ -10,7 +10,8 @@ import { PaymentActions } from '@/components/admin/AdminActions';
 export const metadata = { title: 'Төлбөр' };
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPayments({ searchParams }: { searchParams: { status?: string } }) {
+export default async function AdminPayments(props: { searchParams: Promise<{ status?: string }> }) {
+  const searchParams = await props.searchParams;
   await pageUser(['admin']);
   const status = searchParams.status === 'done' ? 'done' : 'pending';
   const payments = await Payment.find(status === 'pending' ? { status: 'pending' } : { status: { $in: ['confirmed', 'rejected', 'cancelled'] } })
