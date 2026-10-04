@@ -89,7 +89,7 @@ export default async function NotificationsPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <Link href={n.link} className="font-bold leading-snug">
+                        <Link href={n.link || '/'} className="font-bold leading-snug">
                           {n.title}
                         </Link>
                         <span className="shrink-0 text-xs text-muted">{timeAgo(n.createdAt)}</span>
