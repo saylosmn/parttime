@@ -4,6 +4,7 @@ import { Avatar, Rating, Verified } from '@/components/ui';
 import { InstallRow, PushToggle } from '@/components/Pwa';
 import { ProfileEditor } from '@/components/ProfileEditor';
 import { SignOutButton } from '@/components/SignOutButton';
+import { AppAlertsSetting } from '@/components/employer/AppAlertsSetting';
 
 export const metadata = { title: 'Профайл' };
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,14 @@ export default async function EmployerProfile() {
       <ProfileEditor
         role="employer"
         title="Профайл"
-        initial={{ name: u.name ?? '', phone: u.phone ?? '', companyName: u.companyName ?? '', companyDistrict: u.companyDistrict ?? '' }}
+        initial={{
+          name: u.name ?? '',
+          phone: u.phone ?? '',
+          companyName: u.companyName ?? '',
+          companyDistrict: u.companyDistrict ?? '',
+          companyAddress: u.companyAddress ?? '',
+          companyMapUrl: u.companyMapUrl ?? '',
+        }}
       >
         <div className="flex items-center gap-4">
           <Avatar name={u.companyName || u.name} size="lg" />
@@ -45,6 +53,7 @@ export default async function EmployerProfile() {
             <span>Push мэдэгдэл</span>
             <PushToggle />
           </div>
+          <AppAlertsSetting initial={(u.appAlerts as 'each' | 'hourly') ?? 'each'} />
           <InstallRow />
         </div>
         <SignOutButton />

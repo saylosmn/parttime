@@ -12,7 +12,14 @@ export type StudentValues = {
   availability: Availability[];
   bio: string;
 };
-export type EmployerValues = { name: string; phone: string; companyName: string; companyDistrict: string };
+export type EmployerValues = {
+  name: string;
+  phone: string;
+  companyName: string;
+  companyDistrict: string;
+  companyAddress?: string;
+  companyMapUrl?: string;
+};
 
 export function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
@@ -117,6 +124,16 @@ export function EmployerFields({ v, set }: { v: EmployerValues; set: (p: Partial
       <Field label="Байршил (дүүрэг)">
         <DistrictSelect value={v.companyDistrict} onChange={(companyDistrict) => set({ companyDistrict })} />
       </Field>
+      {v.companyAddress !== undefined && (
+        <Field label="Хаяг (заавал биш)" hint="Шинэ зар нэмэхэд автоматаар бөглөгдөнө">
+          <input className="input" value={v.companyAddress} onChange={(e) => set({ companyAddress: e.target.value })} placeholder="1-р хороо, ... төвийн 2 давхар" maxLength={200} />
+        </Field>
+      )}
+      {v.companyMapUrl !== undefined && (
+        <Field label="Google Maps холбоос (заавал биш)" hint="Google Maps дээр «Share» → «Copy link». Шинэ зарт автоматаар орно">
+          <input className="input" type="url" value={v.companyMapUrl} onChange={(e) => set({ companyMapUrl: e.target.value.trim() })} placeholder="https://maps.app.goo.gl/..." maxLength={500} />
+        </Field>
+      )}
       <Field label="Утас">
         <PhoneInput value={v.phone} onChange={(phone) => set({ phone })} />
       </Field>

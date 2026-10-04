@@ -24,6 +24,11 @@ const UserSchema = new Schema(
     savedJobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }], // Оюутны хадгалсан зарууд
     companyName: String,
     companyDistrict: String,
+    companyAddress: String, // Шинэ зарын формд автоматаар бөглөгдөнө
+    companyMapUrl: String,
+    // Шинэ өргөдлийн push: 'each' — бүрт, 'hourly' — цагт нэг удаа (апп доторх нь бүгд хэвээр)
+    appAlerts: { type: String, enum: ['each', 'hourly'], default: 'each' },
+    lastAppPushAt: Date,
     verified: { type: Boolean, default: false },
     banned: { type: Boolean, default: false },
     ratingAvg: { type: Number, default: 0 },

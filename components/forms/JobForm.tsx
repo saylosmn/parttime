@@ -8,6 +8,7 @@ import { api } from '@/lib/client';
 import { PAY_UNITS, TAGS, type JobTag, type PayUnit } from '@/lib/config';
 import { requestPushPromptLater } from '../Pwa';
 import { Field, DistrictSelect } from './fields';
+import { SchedulePicker } from './SchedulePicker';
 
 export type JobValues = {
   title: string;
@@ -100,9 +101,22 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
         <p className="mt-1 text-xs text-muted">«Тохиролцоно» гэж бичихгүй — тодорхой дүн оруулна.</p>
       </div>
 
-      <Field label="Хуваарь (заавал)" hint="Жишээ нь: Бя, Ня 09:00–15:00">
-        <input className="input" value={v.schedule} onChange={(e) => set({ schedule: e.target.value })} required maxLength={80} />
-      </Field>
+      <div>
+        <span className="label">Хуваарь (заавал)</span>
+        <SchedulePicker
+          value={v.schedule}
+          onChange={(schedule) => set({ schedule })}
+          onTags={({ weekend, evening }) =>
+            setV((s) => {
+              // Хуваариас шошгыг автоматаар тааруулна (бусад шошго хэвээр)
+              const tags: JobTag[] = s.tags.filter((t) => t !== 'weekend' && t !== 'evening');
+              if (weekend) tags.push('weekend');
+              if (evening) tags.push('evening');
+              return { ...s, tags };
+            })
+          }
+        />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Дүүрэг (заавал)">
@@ -200,9 +214,13 @@ export function JobForm({ id, initial }: { id?: string; initial?: Partial<JobVal
 
       {err && <p className="text-sm text-danger">{err}</p>}
       <button className="btn-primary w-full min-h-[52px]" disabled={busy}>
-        {busy ? 'Хадгалж байна…' : id ? 'Хадгалах (дахин шалгалтад орно)' : 'Шалгуулахаар илгээх'}
+        {busy ? 'Хадгалж байна…' : id ? 'Хадгалах' : 'Зар илгээх'}
       </button>
-      <p className="text-center text-xs text-muted">Зар нийтлэгдэхээс өмнө админ шалгана.</p>
+      <p className="text-center text-xs text-muted">
+        {id
+          ? 'Хуваарь, хаяг, шошго мэт жижиг засвар шууд хадгалагдана. Гарчиг, цалин, тайлбар өөрчилбөл дахин шалгагдана.'
+          : 'Баталгаажсан ажил олгогчийн зар шууд нийтлэгдэнэ, бусад нь админ шалгасны дараа.'}
+      </p>
     </form>
   );
 }

@@ -3,7 +3,7 @@ import { jobSchema } from '@/lib/validators';
 import { Job, type JobT } from '@/models';
 import { mapFields } from '@/lib/job-location';
 import { moderateJob } from '@/lib/moderation';
-import { notifyJobPending } from '@/lib/job-admin';
+import { publishOrReview } from '@/lib/job-admin';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -14,18 +14,32 @@ async function ownJob(id: string, userId: string, role: string | null) {
   return job;
 }
 
-// Засвар хийхэд дахин админ шалгалтад орно.
+// Оюутнуудыг төөрөгдүүлж болох "чухал" талбарууд — эдгээр өөрчлөгдвөл дахин шалгана
+const MAJOR = ['title', 'description', 'payAmount', 'payUnit', 'requirements'] as const;
+const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+
+/**
+ * Зар засах. Нийтлэгдсэн зарын хуваарь, хаяг, газрын зураг, шошго зэрэг жижиг засвар →
+ * зар харагдсаар байна. Чухал талбар өөрчлөгдвөл дахин шалгалтад (баталгаажсан бол шууд).
+ */
 export const PATCH = handle(async (req: Request, ctx: Ctx) => {
   const params = await ctx.params;
   const me = await requireUser(['employer']);
   const job = await ownJob(params.id, me.id, me.role);
   const data = jobSchema.parse(await req.json());
+
+  const majorChanged = MAJOR.some((k) => !same(job.get(k), (data as Record<string, unknown>)[k]));
+  const wasActive = job.status === 'active';
   Object.assign(job, data, await mapFields(data.mapUrl), moderateJob(data));
-  const needsReview = me.role !== 'admin';
-  if (needsReview) job.status = 'pending';
+
+  if (me.role === 'admin' || (wasActive && !majorChanged && !job.flagged)) {
+    await job.save();
+    return ok({ status: job.status, review: false });
+  }
+  job.status = 'pending';
   await job.save();
-  if (needsReview) await notifyJobPending(job.toObject() as JobT, true);
-  return ok();
+  const result = await publishOrReview(job.toObject() as JobT, true);
+  return ok({ status: result === 'published' ? 'active' : 'pending', review: result === 'pending' });
 });
 
 // Ажил олгогч зараа хаах

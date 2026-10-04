@@ -3,7 +3,7 @@ import { jobSchema } from '@/lib/validators';
 import { Job, type JobT } from '@/models';
 import { LIMITS } from '@/lib/config';
 import { moderateJob } from '@/lib/moderation';
-import { notifyJobPending } from '@/lib/job-admin';
+import { publishOrReview } from '@/lib/job-admin';
 import { searchJobs } from '@/lib/queries';
 import { dbConnect } from '@/lib/db';
 import { mapFields } from '@/lib/job-location';
@@ -28,6 +28,6 @@ export const POST = handle(async (req: Request) => {
     status: 'pending',
     expiresAt: new Date(Date.now() + LIMITS.jobLifetimeDays * 86400_000),
   });
-  await notifyJobPending(job.toObject() as JobT);
-  return ok({ id: job._id.toString() }, 201);
+  const result = await publishOrReview(job.toObject() as JobT);
+  return ok({ id: job._id.toString(), status: result === 'published' ? 'active' : 'pending' }, 201);
 });

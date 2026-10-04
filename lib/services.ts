@@ -77,6 +77,15 @@ export async function applicationCounts(jobIds: Types.ObjectId[]) {
   return new Map(rows.map((r) => [r._id.toString(), r.count as number]));
 }
 
+/** Зар бүрийн ажил олгогч хараахан нээж үзээгүй (sent) өргөдлийн тоо. */
+export async function newApplicationCounts(jobIds: Types.ObjectId[]) {
+  const rows = await Application.aggregate([
+    { $match: { jobId: { $in: jobIds }, status: 'sent' } },
+    { $group: { _id: '$jobId', count: { $sum: 1 } } },
+  ]);
+  return new Map(rows.map((r) => [r._id.toString(), r.count as number]));
+}
+
 export { notify };
 
 /** Mongoose lean объектыг client component руу дамжуулах боломжтой болгоно. */

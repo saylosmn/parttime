@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { FileText, Plus } from 'lucide-react';
 import { pageUser } from '@/lib/guards';
 import { Job } from '@/models';
-import { applicationCounts } from '@/lib/services';
+import { applicationCounts, newApplicationCounts } from '@/lib/services';
 import { formatPay, type PayUnit } from '@/lib/config';
 import { EmptyState } from '@/components/ui';
 import { JobStatusBadge } from '@/components/employer/JobStatusBadge';
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function EmployerJobs() {
   const me = await pageUser(['employer']);
   const jobs = await Job.find({ employerId: me.id }).sort({ createdAt: -1 }).lean();
-  const counts = await applicationCounts(jobs.map((j) => j._id));
+  const [counts, fresh] = await Promise.all([applicationCounts(jobs.map((j) => j._id)), newApplicationCounts(jobs.map((j) => j._id))]);
   // Server component: хүсэлт бүрт нэг удаа ажилладаг тул цаг авах нь зөв
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
@@ -45,7 +45,10 @@ export default async function EmployerJobs() {
                     {j.status === 'active' && ` · ${days} хоног үлдсэн`}
                   </p>
                 </div>
-                <JobStatusBadge status={j.status} />
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {(fresh.get(j._id.toString()) ?? 0) > 0 && <span className="badge bg-accent text-accent-ink">+{fresh.get(j._id.toString())} шинэ</span>}
+                  <JobStatusBadge status={j.status} />
+                </span>
               </Link>
             );
           })}

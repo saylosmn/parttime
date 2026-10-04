@@ -36,9 +36,10 @@ export type NotifyInput = {
 };
 
 /** Апп доторх мэдэгдэл + Web Push хоёуланг нь илгээнэ. Push алдаа гарсан ч апп доторх нь үлдэнэ. */
-export async function notify(userId: string | Types.ObjectId, n: NotifyInput) {
+export async function notify(userId: string | Types.ObjectId, n: NotifyInput, opts: { push?: boolean } = {}) {
   const uid = userId.toString();
   await Notification.create({ userId: uid, ...n, body: n.body ?? '' });
+  if (opts.push === false) return;
   try {
     await sendPushToUser(uid, { title: n.title, body: n.body ?? '', link: n.link, tag: n.type });
   } catch (e) {

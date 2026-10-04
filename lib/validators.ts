@@ -54,6 +54,15 @@ export const employerProfileSchema = z.object({
   phone,
   companyName: z.string().trim().min(2).max(80),
   companyDistrict: district,
+  companyAddress: z.string().trim().max(200).optional().default(''),
+  companyMapUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((s) => s === '' || isGoogleMapsUrl(s), 'Google Maps-ийн холбоос оруулна уу')
+    .optional()
+    .default(''),
+  appAlerts: z.enum(['each', 'hourly']).optional(),
 });
 
 const NEGOTIABLE = /тохиролц|тохирно|negotiable/i;

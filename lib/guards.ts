@@ -41,6 +41,10 @@ export function handle<A extends unknown[]>(fn: (...args: A) => Promise<Response
       if (e instanceof ZodError) {
         return NextResponse.json({ error: e.issues[0]?.message ?? 'Буруу өгөгдөл', issues: e.issues }, { status: 400 });
       }
+      // Буруу хэлбэрийн ID (жишээ нь /api/jobs/abc) → 404
+      if ((e as { name?: string })?.name === 'CastError') {
+        return NextResponse.json({ error: 'Олдсонгүй' }, { status: 404 });
+      }
       if ((e as { code?: number })?.code === 11000) {
         return NextResponse.json({ error: 'Давхардсан бичлэг' }, { status: 409 });
       }

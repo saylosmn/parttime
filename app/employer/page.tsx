@@ -3,7 +3,7 @@ import { Inbox, Plus, Zap } from 'lucide-react';
 import { pageUser } from '@/lib/guards';
 import { Application, Job, User } from '@/models';
 import { loadApplicants } from '@/lib/employer';
-import { applicationCounts } from '@/lib/services';
+import { applicationCounts, newApplicationCounts } from '@/lib/services';
 import { LIMITS } from '@/lib/config';
 import { EmptyState, Stat } from '@/components/ui';
 import { BellButton } from '@/components/Nav';
@@ -25,11 +25,11 @@ export default async function EmployerDashboard() {
     Job.find({ employerId: me.id, status: { $ne: 'closed' } }).sort({ createdAt: -1 }).limit(6).lean(),
     Application.countDocuments({ employerId: me.id, createdAt: { $gte: weekAgo } }),
     Application.countDocuments({ employerId: me.id, status: 'invited', interviewAt: { $gte: now, $lte: weekAhead } }),
-    loadApplicants(me.id, { statuses: ['sent', 'viewed'] }, 8),
+    loadApplicants(me.id, { statuses: ['sent', 'viewed'] }, 12),
   ]);
   const active = jobs.filter((j) => j.status === 'active');
   const featured = active.filter((j) => j.isFeatured).length;
-  const counts = await applicationCounts(jobs.map((j) => j._id));
+  const [counts, freshCounts] = await Promise.all([applicationCounts(jobs.map((j) => j._id)), newApplicationCounts(jobs.map((j) => j._id))]);
   const rated = (user?.ratingCount ?? 0) >= LIMITS.minRatingsForAvg;
 
   return (
@@ -86,7 +86,12 @@ export default async function EmployerDashboard() {
                     <Link key={j._id.toString()} href={`/employer/jobs/${j._id}`} className="block rounded-card border border-line bg-sunken p-4 hover:bg-surface-2">
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate font-bold">{j.title}</p>
-                        <JobStatusBadge status={j.status} />
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          {(freshCounts.get(j._id.toString()) ?? 0) > 0 && (
+                            <span className="badge bg-accent text-accent-ink">+{freshCounts.get(j._id.toString())} шинэ</span>
+                          )}
+                          <JobStatusBadge status={j.status} />
+                        </span>
                       </div>
                       <p className="mt-1 text-sm text-muted">
                         {j.status === 'pending'

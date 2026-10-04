@@ -30,6 +30,21 @@ export async function rejectJob(id: string, reason: string) {
   return job;
 }
 
+/**
+ * Зарыг нийтлэх эсвэл шалгалтад оруулах.
+ * Баталгаажсан ажил олгогчийн, сэжигтэй шинжгүй зар → шууд нийтлэгдэнэ (админ хүлээхгүй).
+ * Бусад тохиолдолд pending болж админд мэдэгдэнэ. Зар заавал pending төлөвтэй хадгалагдсан байх ёстой.
+ */
+export async function publishOrReview(job: JobT, edited = false) {
+  const employer = await User.findById(job.employerId, 'verified').lean();
+  if (employer?.verified && !job.flagged) {
+    await approveJob(job._id.toString());
+    return 'published' as const;
+  }
+  await notifyJobPending(job, edited);
+  return 'pending' as const;
+}
+
 /** Шалгах зар ирэхэд админд (апп + push + Telegram товчтой) мэдэгдэнэ. */
 export async function notifyJobPending(job: JobT, edited = false) {
   const employer = await User.findById(job.employerId, 'companyName name verified').lean();
